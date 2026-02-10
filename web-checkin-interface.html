@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seminar Check-In System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .scanner-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+
+        .result-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .result-content {
+            text-align: center;
+        }
+
+        .result-content h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .result-content p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .camera-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .camera-btn {
+            background: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .camera-btn:hover {
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Seminar Check-In</h1>
+            <p>Scan or enter participant QR code</p>
+        </div>
+
+        <!-- Manual Entry -->
+        <div class="scanner-section">
+            <div class="input-group">
+                <label for="uniqueId">Participant ID</label>
+                <input 
+                    type="text" 
+                    id="uniqueId" 
+                    placeholder="SEM-20240315-0001-123"
+                    autocomplete="off"
+                >
+            </div>
+            <button class="btn" onclick="checkIn()">Check In Participant</button>
+        </div>
+
+        <!-- Camera Scanner (Optional - requires library) -->
+        <div class="camera-section">
+            <button class="btn camera-btn" onclick="startCamera()">📷 Use Camera Scanner</button>
+            <video id="video" playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Processing...</p>
+        </div>
+
+        <!-- Result Display -->
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-content">
+                <h2 id="resultTitle"></h2>
+                <p id="resultMessage"></p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCheckedIn">0</div>
+                <div class="stat-label">Checked In</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRegistered">0</div>
+                <div class="stat-label">Registered</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+        // IMPORTANT: Replace this with your actual Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVdC_EathdO3nkkbnjr5J1O1TDxAB5dA4ZDLe_fKNhKtaCkOlA5P0GRspm8LYVIBaWJQ/exec';
+        
+        // If you're using this as standalone without deploying as web app,
+        // you can manually check in by updating the Google Sheet
+
+        // ============================================================
+        // CHECK-IN FUNCTION
+        // ============================================================
+        async function checkIn() {
+            const uniqueId = document.getElementById('uniqueId').value.trim();
+            
+            if (!uniqueId) {
+                showResult('error', '⚠️', 'Error', 'Please enter or scan a participant ID');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                // OPTION 1: Using Google Apps Script Web App
+                if (SCRIPT_URL && SCRIPT_URL !== 'YOUR_SCRIPT_URL_HERE') {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: new URLSearchParams({ uniqueId: uniqueId })
+                    });
+                    
+                    const result = await response.json();
+                    handleCheckInResult(result);
+                } else {
+                    // OPTION 2: Manual verification (for demonstration)
+                    // In production, replace this with actual backend call
+                    simulateCheckIn(uniqueId);
+                }
+                
+                // Clear input
+                document.getElementById('uniqueId').value = '';
+                
+                // Update stats
+                updateStats();
+                
+            } catch (error) {
+                showResult('error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        // HANDLE CHECK-IN RESULT
+        // ============================================================
+        function handleCheckInResult(result) {
+            if (result.success) {
+                showResult(
+                    'success',
+                    '✅',
+                    'Check-In Successful!',
+                    `Welcome, ${result.name}!<br>Time: ${new Date(result.checkInTime).toLocaleTimeString()}`
+                );
+                playSuccessSound();
+            } else {
+                if (result.message === 'Already checked in') {
+                    showResult(
+                        'warning',
+                        '⚠️',
+                        'Already Checked In',
+                        `${result.name} was already checked in at ${new Date(result.checkInTime).toLocaleTimeString()}`
+                    );
+                } else {
+                    showResult(
+                        'error',
+                        '❌',
+                        'Not Found',
+                        'Participant ID not found. Please verify the QR code.'
+                    );
+                }
+                playErrorSound();
+            }
+        }
+
+        // ============================================================
+        // SIMULATE CHECK-IN (for demo purposes)
+        // ============================================================
+        function simulateCheckIn(uniqueId) {
+            // This is a simulation for demonstration
+            // In production, this would call your Google Apps Script
+            
+            const isValid = uniqueId.startsWith('SEM-');
+            
+            if (isValid) {
+                const result = {
+                    success: true,
+                    name: 'Demo Participant',
+                    email: 'demo@example.com',
+                    checkInTime: new Date()
+                };
+                handleCheckInResult(result);
+            } else {
+                const result = {
+                    success: false,
+                    message: 'Participant not found'
+                };
+                handleCheckInResult(result);
+            }
+        }
+
+        // ============================================================
+        // SHOW RESULT
+        // ============================================================
+        function showResult(type, icon, title, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + type;
+            resultDiv.style.display = 'block';
+            
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultMessage').innerHTML = message;
+        }
+
+        // ============================================================
+        // UPDATE STATISTICS
+        // ============================================================
+        async function updateStats() {
+    try {
+        // Call the Apps Script function to get real stats
+        const response = await fetch(SCRIPT_URL + '?action=getStats');
+        const stats = await response.json();
+        
+        document.getElementById('totalCheckedIn').textContent = stats.totalCheckedIn;
+        document.getElementById('totalRegistered').textContent = stats.totalRegistered;
+    } catch (error) {
+        console.log('Could not fetch stats:', error);
+    }
+}
+
+        // ============================================================
+        // CAMERA SCANNER (requires additional library)
+        // ============================================================
+        let stream = null;
+
+        async function startCamera() {
+            const video = document.getElementById('video');
+            
+            if (stream) {
+                // Stop camera
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.style.display = 'none';
+                return;
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                video.play();
+                
+                // Start scanning
+                scanQRCode();
+                
+            } catch (error) {
+                alert('Camera access denied or not available: ' + error.message);
+            }
+        }
+
+        function scanQRCode() {
+            // For production, use a QR code library like jsQR
+            // This is a placeholder for the scanning logic
+            // Libraries to consider:
+            // - jsQR: https://github.com/cozmo/jsQR
+            // - html5-qrcode: https://github.com/mebjas/html5-qrcode
+            
+            alert('QR Code scanning requires additional library. Use manual entry for now or integrate a QR scanning library.');
+        }
+
+        // ============================================================
+        // SOUND EFFECTS
+        // ============================================================
+        function playSuccessSound() {
+            // Optional: Add success sound
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVKno8bllHAU2kdXzzn4vBSl+zPLaizsIGGS56+ibUBELTKXh8bllHAU2kdXzzn4vBSl+zPLaizsIGGS56+ibUBELTKXh');
+            audio.play().catch(() => {});
+        }
+
+        function playErrorSound() {
+            // Optional: Add error sound
+        }
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        document.getElementById('uniqueId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkIn();
+            }
+        });
+
+        // Auto-focus on input when page loads
+        window.addEventListener('load', () => {
+            document.getElementById('uniqueId').focus();
+        });
+    </script>
+</body>
+</html>
