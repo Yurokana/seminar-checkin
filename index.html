@@ -255,6 +255,7 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            position: relative;
         }
 
         .stat-number {
@@ -269,6 +270,15 @@
             color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .stat-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            color: #999;
         }
 
         /* Loading Indicator */
@@ -414,11 +424,11 @@
         <!-- Statistics -->
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number" id="totalCheckedIn">0</div>
+                <div class="stat-number" id="totalCheckedIn">-</div>
                 <div class="stat-label">Checked In</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="totalRegistered">0</div>
+                <div class="stat-number" id="totalRegistered">-</div>
                 <div class="stat-label">Registered</div>
             </div>
         </div>
@@ -439,6 +449,35 @@
         let isScanning = false;
         let lastScannedCode = '';
         let scanCooldown = false;
+
+        // ============================================================
+        // STATISTICS - FETCH FROM GOOGLE SHEETS
+        // ============================================================
+        async function fetchStats() {
+            try {
+                console.log("Fetching statistics from:", SCRIPT_URL + '?action=getStats');
+                
+                const response = await fetch(SCRIPT_URL + '?action=getStats', {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const stats = await response.json();
+                console.log("Statistics received:", stats);
+                
+                // Update display
+                document.getElementById('totalCheckedIn').textContent = stats.totalCheckedIn || 0;
+                document.getElementById('totalRegistered').textContent = stats.totalRegistered || 0;
+                
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                // Don't show error to user, just keep previous values
+            }
+        }
 
         // ============================================================
         // TAB SWITCHING
@@ -484,8 +523,8 @@
 
             // Configuration for scanner
             const config = {
-                fps: 10,    // Frames per second
-                qrbox: {    // Scanning box size
+                fps: 10,
+                qrbox: {
                     width: 250,
                     height: 250
                 },
@@ -494,7 +533,7 @@
 
             // Start scanning
             html5QrCode.start(
-                { facingMode: "environment" },  // Use back camera
+                { facingMode: "environment" },
                 config,
                 onScanSuccess,
                 onScanError
@@ -511,7 +550,6 @@
                 scannerStatus.textContent = '❌ Camera access denied or not available';
                 console.error('Scanner error:', err);
                 
-                // Show helpful message
                 alert('Camera access required! Please allow camera permissions in your browser settings.');
             });
         }
@@ -524,7 +562,6 @@
                     scannerStatus.className = 'scanner-status';
                     scannerStatus.style.display = 'none';
                     
-                    // Update button visibility
                     document.getElementById('startScanBtn').style.display = 'block';
                     document.getElementById('stopScanBtn').style.display = 'none';
                 }).catch(err => {
@@ -534,34 +571,26 @@
         }
 
         function onScanSuccess(decodedText, decodedResult) {
-            // Prevent multiple scans of the same code
             if (scanCooldown || decodedText === lastScannedCode) {
                 return;
             }
 
-            // Set cooldown to prevent duplicate scans
             scanCooldown = true;
             lastScannedCode = decodedText;
 
-            // Show last scanned
             document.getElementById('lastScanned').classList.add('show');
             document.getElementById('lastScannedValue').textContent = decodedText;
 
-            // Play success sound (optional)
             playBeep();
-
-            // Automatically check in
             checkIn(decodedText);
 
-            // Reset cooldown after 3 seconds
             setTimeout(() => {
                 scanCooldown = false;
             }, 3000);
         }
 
         function onScanError(errorMessage) {
-            // Ignore scan errors (they're frequent and normal)
-            // Only log actual errors, not "No QR code found"
+            // Ignore scan errors
         }
 
         // ============================================================
@@ -573,29 +602,27 @@
                 return;
             }
 
-            // Show loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('result').style.display = 'none';
 
             try {
-                // If using Google Apps Script Web App
-                if (SCRIPT_URL && SCRIPT_URL !== 'YOUR_SCRIPT_URL_HERE') {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: new URLSearchParams({ uniqueId: uniqueId.trim() })
-                    });
-                    
-                    const result = await response.json();
-                    handleCheckInResult(result);
-                } else {
-                    // Demo mode for testing
-                    simulateCheckIn(uniqueId);
-                }
+                console.log("Checking in:", uniqueId);
                 
-                // Update statistics
-                updateStats();
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({ uniqueId: uniqueId.trim() })
+                });
+                
+                const result = await response.json();
+                console.log("Check-in result:", result);
+                
+                handleCheckInResult(result);
+                
+                // Refresh statistics after check-in
+                await fetchStats();
                 
             } catch (error) {
+                console.error('Check-in error:', error);
                 showResult('error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
                 playErrorSound();
             } finally {
@@ -619,7 +646,6 @@
                 );
                 playSuccessSound();
                 
-                // Auto-hide success message after 3 seconds if scanning
                 if (isScanning) {
                     setTimeout(() => {
                         document.getElementById('result').style.display = 'none';
@@ -645,25 +671,6 @@
             }
         }
 
-        function simulateCheckIn(uniqueId) {
-            // Demo mode - simulates a check-in
-            const isValid = uniqueId.startsWith('SEM-');
-            
-            if (isValid) {
-                handleCheckInResult({
-                    success: true,
-                    name: 'Demo Participant',
-                    email: 'demo@example.com',
-                    checkInTime: new Date()
-                });
-            } else {
-                handleCheckInResult({
-                    success: false,
-                    message: 'Participant not found'
-                });
-            }
-        }
-
         // ============================================================
         // DISPLAY FUNCTIONS
         // ============================================================
@@ -677,18 +684,10 @@
             document.getElementById('resultMessage').innerHTML = message;
         }
 
-        function updateStats() {
-            // Increment checked-in counter
-            const checkedInEl = document.getElementById('totalCheckedIn');
-            const current = parseInt(checkedInEl.textContent) || 0;
-            checkedInEl.textContent = current + 1;
-        }
-
         // ============================================================
         // SOUND EFFECTS
         // ============================================================
         function playBeep() {
-            // Short beep sound for scan detection
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -707,7 +706,6 @@
         }
 
         function playSuccessSound() {
-            // Success sound
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -726,7 +724,6 @@
         }
 
         function playErrorSound() {
-            // Error sound
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -760,15 +757,18 @@
             }
         });
 
-        // Initialize
+        // ============================================================
+        // INITIALIZE
+        // ============================================================
         window.addEventListener('load', () => {
             console.log('✅ QR Scanner loaded successfully');
-            console.log('📱 Click "Start Scanner" to begin scanning QR codes');
+            console.log('📊 Fetching statistics...');
             
-            // Check if SCRIPT_URL is configured
-            if (SCRIPT_URL === 'YOUR_SCRIPT_URL_HERE') {
-                console.warn('⚠️ SCRIPT_URL not configured - running in demo mode');
-            }
+            // Fetch statistics on load
+            fetchStats();
+            
+            // Refresh statistics every 30 seconds
+            setInterval(fetchStats, 30000);
         });
     </script>
 </body>
