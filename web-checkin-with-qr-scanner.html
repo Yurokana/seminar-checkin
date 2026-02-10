@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seminar Check-In System - QR Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* QR Scanner Styles */
+        #qr-reader {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #qr-reader video {
+            border-radius: 10px;
+            width: 100% !important;
+        }
+
+        #qr-reader__dashboard_section_swaplink {
+            display: none !important;
+        }
+
+        .scanner-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        /* Manual Entry Styles */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Result Display */
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+
+        .result-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .result-content {
+            text-align: center;
+        }
+
+        .result-content h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .result-content p {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Scanner Status */
+        .scanner-status {
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #004085;
+            font-size: 14px;
+            display: none;
+        }
+
+        .scanner-status.active {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .scanner-status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Last Scanned */
+        .last-scanned {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .last-scanned.show {
+            display: block;
+        }
+
+        .last-scanned-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .last-scanned-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Seminar Check-In</h1>
+            <p>Scan QR code or enter participant ID</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('scanner')">📷 QR Scanner</button>
+            <button class="tab" onclick="switchTab('manual')">⌨️ Manual Entry</button>
+        </div>
+
+        <!-- QR Scanner Tab -->
+        <div id="scanner-tab" class="tab-content active">
+            <div class="scanner-status" id="scannerStatus">Initializing scanner...</div>
+            
+            <div class="last-scanned" id="lastScanned">
+                <div class="last-scanned-label">Last Scanned ID:</div>
+                <div class="last-scanned-value" id="lastScannedValue">-</div>
+            </div>
+
+            <div id="qr-reader"></div>
+            
+            <div class="scanner-controls">
+                <button class="btn btn-success" id="startScanBtn" onclick="startScanning()">
+                    Start Scanner
+                </button>
+                <button class="btn btn-danger" id="stopScanBtn" onclick="stopScanning()" style="display: none;">
+                    Stop Scanner
+                </button>
+            </div>
+
+            <div style="text-align: center; color: #666; font-size: 13px; margin-top: 10px;">
+                <p>💡 Tip: Point camera at QR code. Check-in happens automatically!</p>
+            </div>
+        </div>
+
+        <!-- Manual Entry Tab -->
+        <div id="manual-tab" class="tab-content">
+            <div class="input-group">
+                <label for="uniqueId">Participant ID</label>
+                <input 
+                    type="text" 
+                    id="uniqueId" 
+                    placeholder="SEM-20240315-0001-123"
+                    autocomplete="off"
+                >
+            </div>
+            <button class="btn" onclick="checkInManual()">Check In Participant</button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Processing check-in...</p>
+        </div>
+
+        <!-- Result Display -->
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-content">
+                <h2 id="resultTitle"></h2>
+                <p id="resultMessage"></p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCheckedIn">0</div>
+                <div class="stat-label">Checked In</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRegistered">0</div>
+                <div class="stat-label">Registered</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include html5-qrcode library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+        // IMPORTANT: Replace with your actual Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVdC_EathdO3nkkbnjr5J1O1TDxAB5dA4ZDLe_fKNhKtaCkOlA5P0GRspm8LYVIBaWJQ/exec';
+        
+        // QR Scanner instance
+        let html5QrCode = null;
+        let isScanning = false;
+        let lastScannedCode = '';
+        let scanCooldown = false;
+
+        // ============================================================
+        // TAB SWITCHING
+        // ============================================================
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            if (tabName === 'scanner') {
+                document.getElementById('scanner-tab').classList.add('active');
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else {
+                document.getElementById('manual-tab').classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                // Stop scanner when switching away
+                if (isScanning) {
+                    stopScanning();
+                }
+            }
+            
+            // Hide result when switching tabs
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // ============================================================
+        // QR CODE SCANNER
+        // ============================================================
+        function startScanning() {
+            const scannerStatus = document.getElementById('scannerStatus');
+            
+            // Initialize scanner if not already created
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+
+            // Configuration for scanner
+            const config = {
+                fps: 10,    // Frames per second
+                qrbox: {    // Scanning box size
+                    width: 250,
+                    height: 250
+                },
+                aspectRatio: 1.0
+            };
+
+            // Start scanning
+            html5QrCode.start(
+                { facingMode: "environment" },  // Use back camera
+                config,
+                onScanSuccess,
+                onScanError
+            ).then(() => {
+                isScanning = true;
+                scannerStatus.className = 'scanner-status active';
+                scannerStatus.textContent = '✅ Scanner active - Point camera at QR code';
+                
+                // Update button visibility
+                document.getElementById('startScanBtn').style.display = 'none';
+                document.getElementById('stopScanBtn').style.display = 'block';
+            }).catch(err => {
+                scannerStatus.className = 'scanner-status error';
+                scannerStatus.textContent = '❌ Camera access denied or not available';
+                console.error('Scanner error:', err);
+                
+                // Show helpful message
+                alert('Camera access required! Please allow camera permissions in your browser settings.');
+            });
+        }
+
+        function stopScanning() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    const scannerStatus = document.getElementById('scannerStatus');
+                    scannerStatus.className = 'scanner-status';
+                    scannerStatus.style.display = 'none';
+                    
+                    // Update button visibility
+                    document.getElementById('startScanBtn').style.display = 'block';
+                    document.getElementById('stopScanBtn').style.display = 'none';
+                }).catch(err => {
+                    console.error('Error stopping scanner:', err);
+                });
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Prevent multiple scans of the same code
+            if (scanCooldown || decodedText === lastScannedCode) {
+                return;
+            }
+
+            // Set cooldown to prevent duplicate scans
+            scanCooldown = true;
+            lastScannedCode = decodedText;
+
+            // Show last scanned
+            document.getElementById('lastScanned').classList.add('show');
+            document.getElementById('lastScannedValue').textContent = decodedText;
+
+            // Play success sound (optional)
+            playBeep();
+
+            // Automatically check in
+            checkIn(decodedText);
+
+            // Reset cooldown after 3 seconds
+            setTimeout(() => {
+                scanCooldown = false;
+            }, 3000);
+        }
+
+        function onScanError(errorMessage) {
+            // Ignore scan errors (they're frequent and normal)
+            // Only log actual errors, not "No QR code found"
+        }
+
+        // ============================================================
+        // CHECK-IN FUNCTIONS
+        // ============================================================
+        async function checkIn(uniqueId) {
+            if (!uniqueId || uniqueId.trim() === '') {
+                showResult('error', '⚠️', 'Error', 'Please scan a valid QR code');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+
+            try {
+                // If using Google Apps Script Web App
+                if (SCRIPT_URL && SCRIPT_URL !== 'YOUR_SCRIPT_URL_HERE') {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: new URLSearchParams({ uniqueId: uniqueId.trim() })
+                    });
+                    
+                    const result = await response.json();
+                    handleCheckInResult(result);
+                } else {
+                    // Demo mode for testing
+                    simulateCheckIn(uniqueId);
+                }
+                
+                // Update statistics
+                updateStats();
+                
+            } catch (error) {
+                showResult('error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
+                playErrorSound();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function checkInManual() {
+            const uniqueId = document.getElementById('uniqueId').value;
+            checkIn(uniqueId);
+            document.getElementById('uniqueId').value = '';
+        }
+
+        function handleCheckInResult(result) {
+            if (result.success) {
+                showResult(
+                    'success',
+                    '✅',
+                    'Check-In Successful!',
+                    `Welcome, ${result.name}!<br>Time: ${new Date(result.checkInTime).toLocaleTimeString()}`
+                );
+                playSuccessSound();
+                
+                // Auto-hide success message after 3 seconds if scanning
+                if (isScanning) {
+                    setTimeout(() => {
+                        document.getElementById('result').style.display = 'none';
+                    }, 3000);
+                }
+            } else {
+                if (result.message === 'Already checked in') {
+                    showResult(
+                        'warning',
+                        '⚠️',
+                        'Already Checked In',
+                        `${result.name} checked in at ${new Date(result.checkInTime).toLocaleTimeString()}`
+                    );
+                } else {
+                    showResult(
+                        'error',
+                        '❌',
+                        'Not Found',
+                        'Participant ID not found. Please verify the QR code.'
+                    );
+                }
+                playErrorSound();
+            }
+        }
+
+        function simulateCheckIn(uniqueId) {
+            // Demo mode - simulates a check-in
+            const isValid = uniqueId.startsWith('SEM-');
+            
+            if (isValid) {
+                handleCheckInResult({
+                    success: true,
+                    name: 'Demo Participant',
+                    email: 'demo@example.com',
+                    checkInTime: new Date()
+                });
+            } else {
+                handleCheckInResult({
+                    success: false,
+                    message: 'Participant not found'
+                });
+            }
+        }
+
+        // ============================================================
+        // DISPLAY FUNCTIONS
+        // ============================================================
+        function showResult(type, icon, title, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + type;
+            resultDiv.style.display = 'block';
+            
+            document.getElementById('resultIcon').textContent = icon;
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultMessage').innerHTML = message;
+        }
+
+        function updateStats() {
+            // Increment checked-in counter
+            const checkedInEl = document.getElementById('totalCheckedIn');
+            const current = parseInt(checkedInEl.textContent) || 0;
+            checkedInEl.textContent = current + 1;
+        }
+
+        // ============================================================
+        // SOUND EFFECTS
+        // ============================================================
+        function playBeep() {
+            // Short beep sound for scan detection
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function playSuccessSound() {
+            // Success sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 1000;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function playErrorSound() {
+            // Error sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 400;
+            oscillator.type = 'sawtooth';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        document.getElementById('uniqueId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkInManual();
+            }
+        });
+
+        // Stop scanner when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (isScanning) {
+                stopScanning();
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('✅ QR Scanner loaded successfully');
+            console.log('📱 Click "Start Scanner" to begin scanning QR codes');
+            
+            // Check if SCRIPT_URL is configured
+            if (SCRIPT_URL === 'YOUR_SCRIPT_URL_HERE') {
+                console.warn('⚠️ SCRIPT_URL not configured - running in demo mode');
+            }
+        });
+    </script>
+</body>
+</html>
