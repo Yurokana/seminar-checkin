@@ -64,12 +64,6 @@ A complete, automated event registration and check-in system using Google Forms,
 - **`COMPLETE-SETUP-GUIDE.md`** - Step-by-step setup instructions (start here!)
 - **`CUSTOMIZATION-GUIDE.md`** - How to customize for your event
 - **`TROUBLESHOOTING-GUIDE.md`** - Solutions for common issues
-- **`QR-SCANNER-GUIDE.md`** - Guide for using the QR scanner feature
-- **`GITHUB-SHEETS-CONNECTION-FIX.md`** - Connection troubleshooting
-
-### Tools
-
-- **`connection-test.html`** - Diagnostic tool to test your setup
 
 ## 📖 Setup Instructions
 
