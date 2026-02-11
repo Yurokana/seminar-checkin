@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .pending { color: #ffc107; }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Connection Diagnostic Test</h1>
+    
+    <div class="test-box">
+        <h2>Configuration Check</h2>
+        <p id="urlCheck" class="pending">⏳ Checking SCRIPT_URL...</p>
+        <pre id="urlDisplay"></pre>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 1: API Status</h2>
+        <button onclick="testAPIStatus()">Run Test</button>
+        <p id="test1Result" class="pending">Click button to test</p>
+        <pre id="test1Data"></pre>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 2: Statistics</h2>
+        <button onclick="testStatistics()">Run Test</button>
+        <p id="test2Result" class="pending">Click button to test</p>
+        <pre id="test2Data"></pre>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 3: Check-in (with test ID)</h2>
+        <button onclick="testCheckIn()">Run Test</button>
+        <p id="test3Result" class="pending">Click button to test</p>
+        <pre id="test3Data"></pre>
+    </div>
+
+    <script>
+        // Your actual SCRIPT_URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1v_2Z7QLjoMPfCef76ukJ2299VNOJ91Pol7uMfANZJDvCfH3ppEs1HpbnQ1UIQVu6/exec';
+
+        // Check URL configuration
+        document.getElementById('urlDisplay').textContent = SCRIPT_URL;
+        if (SCRIPT_URL && SCRIPT_URL !== 'YOUR_SCRIPT_URL_HERE') {
+            document.getElementById('urlCheck').innerHTML = '✅ <span class="success">SCRIPT_URL is configured</span>';
+        } else {
+            document.getElementById('urlCheck').innerHTML = '❌ <span class="error">SCRIPT_URL not configured</span>';
+        }
+
+        // Test 1: API Status
+        async function testAPIStatus() {
+            const resultEl = document.getElementById('test1Result');
+            const dataEl = document.getElementById('test1Data');
+            
+            resultEl.innerHTML = '⏳ <span class="pending">Testing API status...</span>';
+            dataEl.textContent = '';
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                resultEl.innerHTML = '✅ <span class="success">API is running!</span>';
+                dataEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.innerHTML = '❌ <span class="error">API test failed</span>';
+                dataEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Test 2: Statistics
+        async function testStatistics() {
+            const resultEl = document.getElementById('test2Result');
+            const dataEl = document.getElementById('test2Data');
+            
+            resultEl.innerHTML = '⏳ <span class="pending">Fetching statistics...</span>';
+            dataEl.textContent = '';
+
+            try {
+                console.log('Fetching from:', SCRIPT_URL + '?action=getStats');
+                
+                const response = await fetch(SCRIPT_URL + '?action=getStats', {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const data = await response.json();
+                console.log('Data received:', data);
+                
+                if (data.totalRegistered !== undefined) {
+                    resultEl.innerHTML = '✅ <span class="success">Statistics fetched successfully!</span>';
+                    dataEl.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultEl.innerHTML = '⚠️ <span class="pending">Unexpected response format</span>';
+                    dataEl.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultEl.innerHTML = '❌ <span class="error">Statistics test failed</span>';
+                dataEl.textContent = 'Error: ' + error.message + '\n\nCheck browser console (F12) for details';
+                console.error('Full error:', error);
+            }
+        }
+
+        // Test 3: Check-in
+        async function testCheckIn() {
+            const resultEl = document.getElementById('test3Result');
+            const dataEl = document.getElementById('test3Data');
+            
+            resultEl.innerHTML = '⏳ <span class="pending">Testing check-in with test ID...</span>';
+            dataEl.textContent = '';
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: new URLSearchParams({ uniqueId: 'TEST-001' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success === false && data.message === 'Participant not found') {
+                    resultEl.innerHTML = '✅ <span class="success">Check-in API working! (Participant not found is expected for test ID)</span>';
+                } else if (data.success === true) {
+                    resultEl.innerHTML = '✅ <span class="success">Check-in successful!</span>';
+                } else {
+                    resultEl.innerHTML = '⚠️ <span class="pending">Unexpected response</span>';
+                }
+                
+                dataEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultEl.innerHTML = '❌ <span class="error">Check-in test failed</span>';
+                dataEl.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Auto-run all tests on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAPIStatus();
+                setTimeout(() => testStatistics(), 1000);
+                setTimeout(() => testCheckIn(), 2000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
