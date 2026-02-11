@@ -141,9 +141,9 @@ function sendQREmail(email, name, uniqueId, qrCodeUrl) {
           <p>Thank you for registering for our event. We're excited to have you join us!</p>
           
           <div class="info-box">
-            <strong>📅 Date:</strong> ${CONFIG.seminarDate}<br>
-            <strong>📍 Location:</strong> ${CONFIG.seminarLocation}<br>
-            <strong>🎫 Your ID:</strong> ${uniqueId}
+            <strong> Date:</strong> ${CONFIG.seminarDate}<br>
+            <strong> Location:</strong> ${CONFIG.seminarLocation}<br>
+            <strong> Your ID:</strong> ${uniqueId}
           </div>
           
           <h3>Your Check-in QR Code</h3>
