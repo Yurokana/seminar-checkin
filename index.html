@@ -142,10 +142,6 @@
             transform: none;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-        }
-
         .btn-success {
             background: #28a745;
         }
@@ -192,14 +188,8 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .result.success {
@@ -240,10 +230,26 @@
             line-height: 1.6;
         }
 
+        /* Attendance badge */
+        .attendance-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+
+        .badge-onsite  { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+        .badge-online  { background: #cce5ff; color: #004085; border: 1px solid #004085; }
+        .badge-both    { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+        .badge-unknown { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+
         /* Statistics */
         .stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-top: 30px;
             padding-top: 30px;
@@ -255,7 +261,6 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
-            position: relative;
         }
 
         .stat-number {
@@ -270,15 +275,6 @@
             color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        .stat-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
-            color: #999;
         }
 
         /* Loading Indicator */
@@ -299,18 +295,16 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
+            0%   { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
         /* Scanner Status */
         .scanner-status {
             padding: 10px;
-            background: #e7f3ff;
             border-radius: 8px;
             margin-bottom: 15px;
             text-align: center;
-            color: #004085;
             font-size: 14px;
             display: none;
         }
@@ -369,15 +363,15 @@
 
         <!-- QR Scanner Tab -->
         <div id="scanner-tab" class="tab-content active">
-            <div class="scanner-status" id="scannerStatus">Initializing scanner...</div>
-            
+            <div class="scanner-status" id="scannerStatus"></div>
+
             <div class="last-scanned" id="lastScanned">
                 <div class="last-scanned-label">Last Scanned ID:</div>
                 <div class="last-scanned-value" id="lastScannedValue">-</div>
             </div>
 
             <div id="qr-reader"></div>
-            
+
             <div class="scanner-controls">
                 <button class="btn btn-success" id="startScanBtn" onclick="startScanning()">
                     Start Scanner
@@ -390,34 +384,43 @@
             <div style="text-align: center; color: #666; font-size: 13px; margin-top: 10px;">
                 <p>💡 Tip: Point camera at QR code. Check-in happens automatically!</p>
             </div>
+
+            <div class="loading" id="loading-scanner">
+                <div class="loading-spinner"></div>
+                <p>Processing check-in...</p>
+            </div>
+            <div class="result" id="result-scanner">
+                <div class="result-icon" id="resultIcon-scanner"></div>
+                <div class="result-content">
+                    <h2 id="resultTitle-scanner"></h2>
+                    <p id="resultMessage-scanner"></p>
+                </div>
+            </div>
         </div>
 
         <!-- Manual Entry Tab -->
         <div id="manual-tab" class="tab-content">
             <div class="input-group">
                 <label for="uniqueId">Participant ID</label>
-                <input 
-                    type="text" 
-                    id="uniqueId" 
-                    placeholder="SEM-20240315-0001-123"
+                <input
+                    type="text"
+                    id="uniqueId"
+                    placeholder="SEM-20260309-0001-123"
                     autocomplete="off"
                 >
             </div>
             <button class="btn" onclick="checkInManual()">Check In Participant</button>
-        </div>
 
-        <!-- Loading Indicator -->
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
-            <p>Processing check-in...</p>
-        </div>
-
-        <!-- Result Display -->
-        <div class="result" id="result">
-            <div class="result-icon" id="resultIcon"></div>
-            <div class="result-content">
-                <h2 id="resultTitle"></h2>
-                <p id="resultMessage"></p>
+            <div class="loading" id="loading-manual">
+                <div class="loading-spinner"></div>
+                <p>Processing check-in...</p>
+            </div>
+            <div class="result" id="result-manual">
+                <div class="result-icon" id="resultIcon-manual"></div>
+                <div class="result-content">
+                    <h2 id="resultTitle-manual"></h2>
+                    <p id="resultMessage-manual"></p>
+                </div>
             </div>
         </div>
 
@@ -431,51 +434,45 @@
                 <div class="stat-number" id="totalRegistered">-</div>
                 <div class="stat-label">Registered</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" id="percentage">-</div>
+                <div class="stat-label">% Arrived</div>
+            </div>
         </div>
     </div>
 
-    <!-- Include html5-qrcode library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <script>
         // ============================================================
-        // CONFIGURATION
+        // CONFIGURATION — replace with your Google Apps Script URL
         // ============================================================
-        // IMPORTANT: Replace with your actual Google Apps Script Web App URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvK_juBqqeSjScuaekmOJuSyjKHKRMgvnjI5VbrTHuaH3xhm27HPU2xeDcp6JkPwc6/exec';
-        
-        // QR Scanner instance
-        let html5QrCode = null;
-        let isScanning = false;
-        let lastScannedCode = '';
-        let scanCooldown = false;
 
         // ============================================================
-        // STATISTICS - FETCH FROM GOOGLE SHEETS
+        // STATE
+        // ============================================================
+        let html5QrCode     = null;
+        let isScanning      = false;
+        let lastScannedCode = '';
+        let scanCooldown    = false;
+
+        // ============================================================
+        // STATISTICS
         // ============================================================
         async function fetchStats() {
             try {
-                console.log("Fetching statistics from:", SCRIPT_URL + '?action=getStats');
-                
-                const response = await fetch(SCRIPT_URL + '?action=getStats', {
-                    method: 'GET',
-                    cache: 'no-cache'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
+                const response = await fetch(SCRIPT_URL + '?action=getStats', { cache: 'no-cache' });
+                if (!response.ok) throw new Error('Network error');
                 const stats = await response.json();
-                console.log("Statistics received:", stats);
-                
-                // Update display
-                document.getElementById('totalCheckedIn').textContent = stats.totalCheckedIn || 0;
-                document.getElementById('totalRegistered').textContent = stats.totalRegistered || 0;
-                
+
+                document.getElementById('totalCheckedIn').textContent  = stats.totalCheckedIn  ?? '-';
+                document.getElementById('totalRegistered').textContent = stats.totalRegistered ?? '-';
+                document.getElementById('percentage').textContent      =
+                    stats.totalRegistered ? stats.percentage + '%' : '-';
+
             } catch (error) {
                 console.error('Error fetching statistics:', error);
-                // Don't show error to user, just keep previous values
             }
         }
 
@@ -483,73 +480,48 @@
         // TAB SWITCHING
         // ============================================================
         function switchTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
             if (tabName === 'scanner') {
                 document.getElementById('scanner-tab').classList.add('active');
                 document.querySelectorAll('.tab')[0].classList.add('active');
             } else {
                 document.getElementById('manual-tab').classList.add('active');
                 document.querySelectorAll('.tab')[1].classList.add('active');
-                // Stop scanner when switching away
-                if (isScanning) {
-                    stopScanning();
-                }
+                if (isScanning) stopScanning();
             }
-            
-            // Hide result when switching tabs
-            document.getElementById('result').style.display = 'none';
+
+            // Hide results when switching tabs
+            document.getElementById('result-scanner').style.display = 'none';
+            document.getElementById('result-manual').style.display  = 'none';
         }
 
         // ============================================================
-        // QR CODE SCANNER
+        // QR SCANNER
         // ============================================================
         function startScanning() {
             const scannerStatus = document.getElementById('scannerStatus');
-            
-            // Initialize scanner if not already created
+
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("qr-reader");
             }
 
-            // Configuration for scanner
-            const config = {
-                fps: 10,
-                qrbox: {
-                    width: 250,
-                    height: 250
-                },
-                aspectRatio: 1.0
-            };
-
-            // Start scanning
             html5QrCode.start(
                 { facingMode: "environment" },
-                config,
+                { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
                 onScanSuccess,
-                onScanError
+                () => {} // suppress per-frame scan errors
             ).then(() => {
                 isScanning = true;
                 scannerStatus.className = 'scanner-status active';
                 scannerStatus.textContent = '✅ Scanner active - Point camera at QR code';
-                
-                // Update button visibility
                 document.getElementById('startScanBtn').style.display = 'none';
-                document.getElementById('stopScanBtn').style.display = 'block';
+                document.getElementById('stopScanBtn').style.display  = 'block';
             }).catch(err => {
                 scannerStatus.className = 'scanner-status error';
                 scannerStatus.textContent = '❌ Camera access denied or not available';
                 console.error('Scanner error:', err);
-                
                 alert('Camera access required! Please allow camera permissions in your browser settings.');
             });
         }
@@ -561,213 +533,208 @@
                     const scannerStatus = document.getElementById('scannerStatus');
                     scannerStatus.className = 'scanner-status';
                     scannerStatus.style.display = 'none';
-                    
                     document.getElementById('startScanBtn').style.display = 'block';
-                    document.getElementById('stopScanBtn').style.display = 'none';
-                }).catch(err => {
-                    console.error('Error stopping scanner:', err);
-                });
+                    document.getElementById('stopScanBtn').style.display  = 'none';
+                }).catch(console.error);
             }
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            if (scanCooldown || decodedText === lastScannedCode) {
-                return;
-            }
+        function onScanSuccess(decodedText) {
+            if (scanCooldown || decodedText === lastScannedCode) return;
 
-            scanCooldown = true;
+            scanCooldown    = true;
             lastScannedCode = decodedText;
 
             document.getElementById('lastScanned').classList.add('show');
             document.getElementById('lastScannedValue').textContent = decodedText;
 
             playBeep();
-            checkIn(decodedText);
+            checkIn(decodedText, 'scanner');
 
-            setTimeout(() => {
-                scanCooldown = false;
-            }, 3000);
-        }
-
-        function onScanError(errorMessage) {
-            // Ignore scan errors
+            setTimeout(() => { scanCooldown = false; }, 3000);
         }
 
         // ============================================================
-        // CHECK-IN FUNCTIONS
+        // CHECK-IN
+        // FIX: Uses GET instead of POST.
+        //      POST from GitHub Pages triggers CORS preflight which
+        //      Google Apps Script does not handle reliably.
+        //      GET with query params works without any CORS issues.
         // ============================================================
-        async function checkIn(uniqueId) {
+        async function checkIn(uniqueId, source) {
             if (!uniqueId || uniqueId.trim() === '') {
-                showResult('error', '⚠️', 'Error', 'Please scan a valid QR code');
+                showResult(source, 'error', '⚠️', 'Error', 'Please scan a valid QR code');
                 return;
             }
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
+            document.getElementById(`loading-${source}`).style.display = 'block';
+            document.getElementById(`result-${source}`).style.display  = 'none';
 
             try {
-                console.log("Checking in:", uniqueId);
-                
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: new URLSearchParams({ uniqueId: uniqueId.trim() })
-                });
-                
+                const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
+                const response = await fetch(url);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
                 const result = await response.json();
-                console.log("Check-in result:", result);
-                
-                handleCheckInResult(result);
-                
-                // Refresh statistics after check-in
-                await fetchStats();
-                
+                handleCheckInResult(result, source);
+                fetchStats();
+
             } catch (error) {
                 console.error('Check-in error:', error);
-                showResult('error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
+                showResult(source, 'error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
                 playErrorSound();
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById(`loading-${source}`).style.display = 'none';
             }
         }
 
         function checkInManual() {
-            const uniqueId = document.getElementById('uniqueId').value;
-            checkIn(uniqueId);
+            const uniqueId = document.getElementById('uniqueId').value.trim();
+            if (!uniqueId) return;
+            checkIn(uniqueId, 'manual');
             document.getElementById('uniqueId').value = '';
         }
 
-        function handleCheckInResult(result) {
+        // ============================================================
+        // RESULT HANDLER
+        // ============================================================
+        function handleCheckInResult(result, source) {
             if (result.success) {
+                const badge = formatAttendance(result.attendance);
                 showResult(
+                    source,
                     'success',
                     '✅',
                     'Check-In Successful!',
-                    `Welcome, ${result.name}!<br>Time: ${new Date(result.checkInTime).toLocaleTimeString()}`
+                    `Welcome, <strong>${escapeHtml(result.name)}</strong>!<br>
+                     ${badge}<br>
+                     Time: ${formatTime(result.checkInTime)}`
                 );
                 playSuccessSound();
-                
+
+                // Auto-hide after 4 seconds when using scanner
                 if (isScanning) {
                     setTimeout(() => {
-                        document.getElementById('result').style.display = 'none';
-                    }, 3000);
+                        document.getElementById(`result-${source}`).style.display = 'none';
+                    }, 4000);
                 }
+
+            } else if (result.message === 'Already checked in') {
+                const badge = formatAttendance(result.attendance);
+                showResult(
+                    source,
+                    'warning',
+                    '⚠️',
+                    'Already Checked In',
+                    `<strong>${escapeHtml(result.name)}</strong> checked in at ${formatTime(result.checkInTime)}<br>
+                     ${badge}`
+                );
+                playErrorSound();
+
             } else {
-                if (result.message === 'Already checked in') {
-                    showResult(
-                        'warning',
-                        '⚠️',
-                        'Already Checked In',
-                        `${result.name} checked in at ${new Date(result.checkInTime).toLocaleTimeString()}`
-                    );
-                } else {
-                    showResult(
-                        'error',
-                        '❌',
-                        'Not Found',
-                        'Participant ID not found. Please verify the QR code.'
-                    );
-                }
+                showResult(
+                    source,
+                    'error',
+                    '❌',
+                    'Not Found',
+                    'Participant ID not found. Please verify the QR code.'
+                );
                 playErrorSound();
             }
         }
 
         // ============================================================
-        // DISPLAY FUNCTIONS
+        // ATTENDANCE FORMATTER
+        // Uses partial string matching (.includes) so long bilingual
+        // form values like:
+        //   "Join seminar session only (on-site) / セミナーセッションのみ（会場参加）"
+        // are correctly matched regardless of exact wording.
+        // Add more conditions here if your form has other options.
         // ============================================================
-        function showResult(type, icon, title, message) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.className = 'result ' + type;
-            resultDiv.style.display = 'block';
-            
-            document.getElementById('resultIcon').textContent = icon;
-            document.getElementById('resultTitle').textContent = title;
-            document.getElementById('resultMessage').innerHTML = message;
+        function formatAttendance(value) {
+            if (!value) return '';
+            const v = value.toString().toLowerCase();
+
+            // "Join seminar session only (on-site) / セミナーセッションのみ（会場参加）"
+            if (v.includes('seminar session only') || v.includes('セミナーセッションのみ')) {
+                return `<span class="attendance-badge badge-onsite">🏢 Seminar Only — On-Site / セミナーのみ（会場）</span>`;
+            }
+            // "Join both of seminar session and reception dinner (on-site) / セミナーセッション及びレセプション両方（会場参加）"
+            if (v.includes('reception dinner') || v.includes('レセプション')) {
+                return `<span class="attendance-badge badge-both">🍽️ Seminar + Dinner — On-Site / セミナー＋レセプション（会場）</span>`;
+            }
+            // "Join seminar session via online / セミナーセッションにオンライン参加（聴講のみ）"
+            if (v.includes('online') || v.includes('オンライン')) {
+                return `<span class="attendance-badge badge-online">💻 Seminar — Online / セミナー（オンライン）</span>`;
+            }
+
+            // Fallback: show raw value
+            return `<span class="attendance-badge badge-unknown">${escapeHtml(value)}</span>`;
+        }
+
+        function formatTime(rawTime) {
+            if (!rawTime) return '';
+            try { return new Date(rawTime).toLocaleTimeString(); }
+            catch (e) { return String(rawTime); }
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ============================================================
+        // DISPLAY
+        // ============================================================
+        function showResult(source, type, icon, title, message) {
+            const el = document.getElementById(`result-${source}`);
+            el.className = 'result ' + type;
+            el.style.display = 'block';
+            document.getElementById(`resultIcon-${source}`).textContent  = icon;
+            document.getElementById(`resultTitle-${source}`).textContent = title;
+            document.getElementById(`resultMessage-${source}`).innerHTML = message;
         }
 
         // ============================================================
         // SOUND EFFECTS
         // ============================================================
-        function playBeep() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.1);
+        function createOsc(freq, type, duration) {
+            try {
+                const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+                const osc  = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = type;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) { /* audio not supported */ }
         }
 
-        function playSuccessSound() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 1000;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
-        }
-
-        function playErrorSound() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 400;
-            oscillator.type = 'sawtooth';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
-        }
+        function playBeep()         { createOsc(800,  'sine',     0.1); }
+        function playSuccessSound() { createOsc(1000, 'sine',     0.2); }
+        function playErrorSound()   { createOsc(400,  'sawtooth', 0.3); }
 
         // ============================================================
-        // KEYBOARD SHORTCUTS
+        // KEYBOARD + LIFECYCLE
         // ============================================================
         document.getElementById('uniqueId').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkInManual();
-            }
+            if (e.key === 'Enter') checkInManual();
         });
 
-        // Stop scanner when page unloads
         window.addEventListener('beforeunload', () => {
-            if (isScanning) {
-                stopScanning();
-            }
+            if (isScanning) stopScanning();
         });
 
-        // ============================================================
-        // INITIALIZE
-        // ============================================================
         window.addEventListener('load', () => {
-            console.log('✅ QR Scanner loaded successfully');
-            console.log('📊 Fetching statistics...');
-            
-            // Fetch statistics on load
             fetchStats();
-            
-            // Refresh statistics every 30 seconds
             setInterval(fetchStats, 30000);
         });
     </script>
