@@ -458,7 +458,19 @@
         let scanCooldown    = false;
 
         // ============================================================
+        // CONNECTION PRE-WARM
+        // Fires a lightweight fetch to the Apps Script URL as soon as
+        // the page loads. This wakes up the GAS instance so the first
+        // real check-in doesn't pay the cold-start penalty (~1-3s).
+        // ============================================================
+        function preWarmConnection() {
+            fetch(SCRIPT_URL, { method: 'GET', keepalive: true })
+                .catch(() => {}); // fire-and-forget, ignore errors
+        }
+
+        // ============================================================
         // STATISTICS
+        // Always runs in parallel — never blocks the scan flow.
         // ============================================================
         async function fetchStats() {
             try {
@@ -542,6 +554,11 @@
         function onScanSuccess(decodedText) {
             if (scanCooldown || decodedText === lastScannedCode) return;
 
+            // ── SPEED: fire the fetch immediately on decode ──────────
+            // Don't wait for cooldown logic, DOM updates, or beep.
+            // The network request starts at the earliest possible moment.
+            const fetchPromise = startCheckInFetch(decodedText);
+
             scanCooldown    = true;
             lastScannedCode = decodedText;
 
@@ -549,36 +566,41 @@
             document.getElementById('lastScannedValue').textContent = decodedText;
 
             playBeep();
-            checkIn(decodedText, 'scanner');
+
+            // Pass the already-started promise to the handler
+            handleFetchPromise(fetchPromise, decodedText, 'scanner');
 
             setTimeout(() => { scanCooldown = false; }, 3000);
         }
 
         // ============================================================
-        // CHECK-IN
-        // FIX: Uses GET instead of POST.
-        //      POST from GitHub Pages triggers CORS preflight which
-        //      Google Apps Script does not handle reliably.
-        //      GET with query params works without any CORS issues.
+        // CHECK-IN — SPLIT INTO TWO FUNCTIONS FOR SPEED
+        //
+        // startCheckInFetch: starts the network request immediately.
+        //   Called the instant QR is decoded — before beep, before
+        //   DOM updates, before anything else.
+        //
+        // handleFetchPromise: awaits the result and updates the UI.
+        //   Called right after, so UI updates happen in parallel with
+        //   the network request already in-flight.
+        //
+        // For manual entry: checkIn() wraps both as before.
         // ============================================================
-        async function checkIn(uniqueId, source) {
-            if (!uniqueId || uniqueId.trim() === '') {
-                showResult(source, 'error', '⚠️', 'Error', 'Please scan a valid QR code');
-                return;
-            }
+        function startCheckInFetch(uniqueId) {
+            const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
+            return fetch(url); // returns Promise — not awaited yet
+        }
 
+        async function handleFetchPromise(fetchPromise, uniqueId, source) {
             document.getElementById(`loading-${source}`).style.display = 'block';
             document.getElementById(`result-${source}`).style.display  = 'none';
 
             try {
-                const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
-                const response = await fetch(url);
-
+                const response = await fetchPromise;
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const result = await response.json();
                 handleCheckInResult(result, source);
-                fetchStats();
+                fetchStats(); // parallel — doesn't block UI update
 
             } catch (error) {
                 console.error('Check-in error:', error);
@@ -587,6 +609,15 @@
             } finally {
                 document.getElementById(`loading-${source}`).style.display = 'none';
             }
+        }
+
+        async function checkIn(uniqueId, source) {
+            if (!uniqueId || uniqueId.trim() === '') {
+                showResult(source, 'error', '⚠️', 'Error', 'Please scan a valid QR code');
+                return;
+            }
+            const fetchPromise = startCheckInFetch(uniqueId);
+            await handleFetchPromise(fetchPromise, uniqueId, source);
         }
 
         function checkInManual() {
@@ -614,11 +645,11 @@
                 playSuccessSound();
 
                 // Auto-hide after 4 seconds when using scanner
-                //if (isScanning) {
-                //    setTimeout(() => {
-                //        document.getElementById(`result-${source}`).style.display = 'none';
-                //    }, 30000);
-                //}
+                if (isScanning) {
+                    setTimeout(() => {
+                        document.getElementById(`result-${source}`).style.display = 'none';
+                    }, 4000);
+                }
 
             } else if (result.message === 'Already checked in') {
                 const badge = formatAttendance(result.attendance);
@@ -734,6 +765,7 @@
         });
 
         window.addEventListener('load', () => {
+            preWarmConnection();  // wake up GAS instance immediately
             fetchStats();
             setInterval(fetchStats, 30000);
         });
