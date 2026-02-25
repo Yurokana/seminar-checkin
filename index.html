@@ -645,11 +645,11 @@
                 playSuccessSound();
 
                 // Auto-hide after 4 seconds when using scanner
-                if (isScanning) {
-                    setTimeout(() => {
-                        document.getElementById(`result-${source}`).style.display = 'none';
-                    }, 4000);
-                }
+                //if (isScanning) {
+                //    setTimeout(() => {
+                //        document.getElementById(`result-${source}`).style.display = 'none';
+                //    }, 4000);
+                //}
 
             } else if (result.message === 'Already checked in') {
                 const badge = formatAttendance(result.attendance);
