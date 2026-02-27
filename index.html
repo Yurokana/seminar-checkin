@@ -464,7 +464,7 @@
         // real check-in doesn't pay the cold-start penalty (~1-3s).
         // ============================================================
         function preWarmConnection() {
-            fetch(SCRIPT_URL, { method: 'GET', keepalive: true })
+            fetch(SCRIPT_URL + '?action=warmUp', { method: 'GET', keepalive: true })
                 .catch(() => {}); // fire-and-forget, ignore errors
         }
 
