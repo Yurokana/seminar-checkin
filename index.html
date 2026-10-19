@@ -242,9 +242,6 @@
         }
 
         .badge-onsite  { background: #d4edda; color: #155724; border: 1px solid #28a745; }
-        .badge-online  { background: #cce5ff; color: #004085; border: 1px solid #004085; }
-        .badge-both    { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-        .badge-unknown { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
 
         /* Statistics */
         .stats {
@@ -345,6 +342,7 @@
             font-weight: 600;
             color: #333;
             font-family: monospace;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -405,7 +403,7 @@
                 <input
                     type="text"
                     id="uniqueId"
-                    placeholder="SEM-20260309-0001-123"
+                    placeholder="SEM-20261113-A1B2C3D4E5"
                     autocomplete="off"
                 >
             </div>
@@ -441,11 +439,37 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- ============================================================
+         QR LIBRARY LOADER (with fallbacks)
+         Order: 1) local file next to this page  (most reliable at the venue)
+                2) unpkg CDN
+                3) jsDelivr CDN
+         Put html5-qrcode.min.js in the same folder as this HTML file.
+         ============================================================ -->
+    <script>
+        (function () {
+            var sources = [
+                'html5-qrcode.min.js',
+                'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
+                'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
+            ];
+
+            function loadLib(i) {
+                if (i >= sources.length) { window.qrLibFailed = true; return; }
+                var s = document.createElement('script');
+                s.src = sources[i];
+                s.onload  = function () { window.qrLibSource = sources[i]; };
+                s.onerror = function () { s.remove(); loadLib(i + 1); };
+                document.head.appendChild(s);
+            }
+            loadLib(0);
+        })();
+    </script>
 
     <script>
         // ============================================================
-        // CONFIGURATION — replace with your Google Apps Script URL
+        // CONFIGURATION — replace with your Google Apps Script Web App URL
+        // (must be the URL of the CURRENT deployment — see Deploy → Manage deployments)
         // ============================================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-whrebay0KABeptWd7qEMOYhIcSGQRIcCTETOeKAZooiEVplZvIdswuXnBeZsK9VD/exec';
 
@@ -459,9 +483,8 @@
 
         // ============================================================
         // CONNECTION PRE-WARM
-        // Fires a lightweight fetch to the Apps Script URL as soon as
-        // the page loads. This wakes up the GAS instance so the first
-        // real check-in doesn't pay the cold-start penalty (~1-3s).
+        // Wakes up the Apps Script instance so the first real check-in
+        // doesn't pay the cold-start penalty (~1-3s).
         // ============================================================
         function preWarmConnection() {
             fetch(SCRIPT_URL + '?action=warmUp', { method: 'GET', keepalive: true })
@@ -470,7 +493,6 @@
 
         // ============================================================
         // STATISTICS
-        // Always runs in parallel — never blocks the scan flow.
         // ============================================================
         async function fetchStats() {
             try {
@@ -515,6 +537,15 @@
         function startScanning() {
             const scannerStatus = document.getElementById('scannerStatus');
 
+            // Library not loaded (all sources failed, or still loading)
+            if (typeof Html5Qrcode === 'undefined') {
+                scannerStatus.className = 'scanner-status error';
+                scannerStatus.textContent = window.qrLibFailed
+                    ? '❌ QR library failed to load. Check internet / put html5-qrcode.min.js next to this page, or use Manual Entry.'
+                    : '⏳ QR library is still loading. Please try again in a moment.';
+                return;
+            }
+
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("qr-reader");
             }
@@ -532,7 +563,7 @@
                 document.getElementById('stopScanBtn').style.display  = 'block';
             }).catch(err => {
                 scannerStatus.className = 'scanner-status error';
-                scannerStatus.textContent = '❌ Camera access denied or not available';
+                scannerStatus.textContent = '❌ Camera access denied or not available (HTTPS required)';
                 console.error('Scanner error:', err);
                 alert('Camera access required! Please allow camera permissions in your browser settings.');
             });
@@ -554,9 +585,7 @@
         function onScanSuccess(decodedText) {
             if (scanCooldown || decodedText === lastScannedCode) return;
 
-            // ── SPEED: fire the fetch immediately on decode ──────────
-            // Don't wait for cooldown logic, DOM updates, or beep.
-            // The network request starts at the earliest possible moment.
+            // Fire the fetch immediately on decode — before beep / DOM updates
             const fetchPromise = startCheckInFetch(decodedText);
 
             scanCooldown    = true;
@@ -567,24 +596,15 @@
 
             playBeep();
 
-            // Pass the already-started promise to the handler
             handleFetchPromise(fetchPromise, decodedText, 'scanner');
 
             setTimeout(() => { scanCooldown = false; }, 3000);
         }
 
         // ============================================================
-        // CHECK-IN — SPLIT INTO TWO FUNCTIONS FOR SPEED
-        //
+        // CHECK-IN
         // startCheckInFetch: starts the network request immediately.
-        //   Called the instant QR is decoded — before beep, before
-        //   DOM updates, before anything else.
-        //
         // handleFetchPromise: awaits the result and updates the UI.
-        //   Called right after, so UI updates happen in parallel with
-        //   the network request already in-flight.
-        //
-        // For manual entry: checkIn() wraps both as before.
         // ============================================================
         function startCheckInFetch(uniqueId) {
             const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
@@ -603,8 +623,10 @@
                 fetchStats(); // parallel — doesn't block UI update
 
             } catch (error) {
+                // Allow the same QR to be scanned again right away after a network failure
+                if (source === 'scanner') lastScannedCode = '';
                 console.error('Check-in error:', error);
-                showResult(source, 'error', '❌', 'Error', 'Failed to process check-in: ' + error.message);
+                showResult(source, 'error', '❌', 'Error', 'Failed to process check-in: ' + escapeHtml(error.message));
                 playErrorSound();
             } finally {
                 document.getElementById(`loading-${source}`).style.display = 'none';
@@ -644,13 +666,6 @@
                 );
                 playSuccessSound();
 
-                // Auto-hide after 4 seconds when using scanner
-                //if (isScanning) {
-                //    setTimeout(() => {
-                //        document.getElementById(`result-${source}`).style.display = 'none';
-                //    }, 4000);
-                //}
-
             } else if (result.message === 'Already checked in') {
                 const badge = formatAttendance(result.attendance);
                 showResult(
@@ -663,7 +678,7 @@
                 );
                 playErrorSound();
 
-            } else {
+            } else if (result.message === 'Participant not found' || result.message === 'Invalid ID') {
                 showResult(
                     source,
                     'error',
@@ -672,36 +687,28 @@
                     'Participant ID not found. Please verify the QR code.'
                 );
                 playErrorSound();
+
+            } else {
+                // System busy / sheet write error / anything else → allow immediate retry
+                if (source === 'scanner') lastScannedCode = '';
+                showResult(
+                    source,
+                    'error',
+                    '⚠️',
+                    'Please try again',
+                    escapeHtml(result.message || result.error || 'Unknown error')
+                );
+                playErrorSound();
             }
         }
 
         // ============================================================
-        // ATTENDANCE FORMATTER
-        // Uses partial string matching (.includes) so long bilingual
-        // form values like:
-        //   "Join seminar session only (on-site) / セミナーセッションのみ（会場参加）"
-        // are correctly matched regardless of exact wording.
-        // Add more conditions here if your form has other options.
+        // ATTENDANCE BADGE
+        // Everyone is on-site now (the backend returns 'On-site').
         // ============================================================
         function formatAttendance(value) {
             if (!value) return '';
-            const v = value.toString().toLowerCase();
-
-            // "Join seminar session only (on-site) / セミナーセッションのみ（会場参加）"
-            if (v.includes('seminar session only') || v.includes('セミナーセッションのみ')) {
-                return `<span class="attendance-badge badge-onsite">🏢 Seminar Only — On-Site / セミナーのみ（会場）</span>`;
-            }
-            // "Join both of seminar session and reception dinner (on-site) / セミナーセッション及びレセプション両方（会場参加）"
-            if (v.includes('reception dinner') || v.includes('レセプション')) {
-                return `<span class="attendance-badge badge-both">🍽️ Seminar + Dinner — On-Site / セミナー＋レセプション（会場）</span>`;
-            }
-            // "Join seminar session via online / セミナーセッションにオンライン参加（聴講のみ）"
-            if (v.includes('online') || v.includes('オンライン')) {
-                return `<span class="attendance-badge badge-online">💻 Seminar — Online / セミナー（オンライン）</span>`;
-            }
-
-            // Fallback: show raw value
-            return `<span class="attendance-badge badge-unknown">${escapeHtml(value)}</span>`;
+            return `<span class="attendance-badge badge-onsite">🏢 On-Site / 会場参加</span>`;
         }
 
         function formatTime(rawTime) {
@@ -711,7 +718,7 @@
         }
 
         function escapeHtml(str) {
-            return String(str)
+            return String(str == null ? '' : str)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
