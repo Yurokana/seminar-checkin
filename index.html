@@ -191,7 +191,6 @@
             z-index: 50;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
             animation: slideUp 0.25s ease;
-            cursor: pointer;
         }
 
         @keyframes slideUp {
@@ -213,13 +212,6 @@
         .result-content { text-align: center; }
         .result-content h2 { margin-bottom: 6px; font-size: 18px; }
         .result-content p  { font-size: 15px; line-height: 1.5; }
-
-        .result-hint {
-            text-align: center;
-            font-size: 11px;
-            opacity: 0.6;
-            margin-top: 6px;
-        }
 
         .attendance-badge {
             display: inline-block;
@@ -350,13 +342,12 @@
                 <div class="loading-spinner"></div>
                 <p>Processing check-in...</p>
             </div>
-            <div class="result" id="result-scanner" onclick="this.style.display='none'">
+            <div class="result" id="result-scanner">
                 <div class="result-icon" id="resultIcon-scanner"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-scanner"></h2>
                     <p id="resultMessage-scanner"></p>
                 </div>
-                <div class="result-hint">Tap to close</div>
             </div>
         </div>
 
@@ -377,13 +368,12 @@
                 <div class="loading-spinner"></div>
                 <p>Processing check-in...</p>
             </div>
-            <div class="result" id="result-manual" onclick="this.style.display='none'">
+            <div class="result" id="result-manual">
                 <div class="result-icon" id="resultIcon-manual"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-manual"></h2>
                     <p id="resultMessage-manual"></p>
                 </div>
-                <div class="result-hint">Tap to close</div>
             </div>
         </div>
     </div>
