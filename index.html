@@ -202,6 +202,23 @@
         .result.error   { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
         .result.warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
 
+        .result-close {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.12);
+            color: inherit;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .result-close:active { background: rgba(0, 0, 0, 0.25); }
+
         .result-icon {
             font-size: 30px;
             text-align: center;
@@ -343,6 +360,8 @@
                 <p>Processing check-in...</p>
             </div>
             <div class="result" id="result-scanner">
+                <button class="result-close" aria-label="Close"
+                        onclick="document.getElementById('result-scanner').style.display='none'">✕</button>
                 <div class="result-icon" id="resultIcon-scanner"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-scanner"></h2>
@@ -369,6 +388,8 @@
                 <p>Processing check-in...</p>
             </div>
             <div class="result" id="result-manual">
+                <button class="result-close" aria-label="Close"
+                        onclick="document.getElementById('result-manual').style.display='none'">✕</button>
                 <div class="result-icon" id="resultIcon-manual"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-manual"></h2>
