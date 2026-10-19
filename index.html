@@ -16,63 +16,89 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 20px;
+            padding: 10px;
         }
 
         .container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             max-width: 600px;
             width: 100%;
-            padding: 40px;
+            padding: 14px;
         }
 
+        /* ---------- Header + compact stats bar ---------- */
         .header {
-            text-align: center;
-            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
         .header h1 {
             color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
+            font-size: 18px;
+            white-space: nowrap;
         }
 
-        .header p {
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+            flex: 1;
+            max-width: 260px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 5px 4px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 0;
+        }
+
+        .stat-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            line-height: 1.1;
+        }
+
+        .stat-label {
+            font-size: 9px;
             color: #666;
-            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
         }
 
+        /* ---------- Tabs ---------- */
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 6px;
+            margin-bottom: 12px;
             border-bottom: 2px solid #e0e0e0;
         }
 
         .tab {
             flex: 1;
-            padding: 15px;
+            padding: 10px 4px;
             background: transparent;
             border: none;
             color: #666;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
             position: relative;
+            white-space: nowrap;
         }
 
-        .tab:hover {
-            color: #667eea;
-        }
-
-        .tab.active {
-            color: #667eea;
-        }
+        .tab:hover,
+        .tab.active { color: #667eea; }
 
         .tab.active::after {
             content: '';
@@ -84,19 +110,14 @@
             background: #667eea;
         }
 
-        .tab-content {
-            display: none;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        /* QR Scanner Styles */
+        /* ---------- QR Scanner ---------- */
         #qr-reader {
             border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         #qr-reader video {
@@ -104,19 +125,17 @@
             width: 100% !important;
         }
 
-        #qr-reader__dashboard_section_swaplink {
-            display: none !important;
-        }
+        #qr-reader__dashboard_section_swaplink { display: none !important; }
 
         .scanner-controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
 
         .btn {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -124,52 +143,30 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-success { background: #28a745; }
+        .btn-danger  { background: #dc3545; }
 
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-        }
-
-        /* Manual Entry Styles */
-        .input-group {
-            margin-bottom: 20px;
-        }
+        /* ---------- Manual entry ---------- */
+        .input-group { margin-bottom: 12px; }
 
         .input-group label {
             display: block;
             color: #333;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-size: 14px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
-            transition: all 0.3s;
         }
 
         .input-group input:focus {
@@ -178,117 +175,90 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        /* Result Display */
+        /* ---------- Result: floating panel at the bottom of the screen ----------
+           Always visible without scrolling, doesn't push the camera around.
+           Tap the panel to close it. */
         .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 10px;
             display: none;
-            animation: slideIn 0.3s ease;
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            max-width: 580px;
+            margin: 0 auto;
+            padding: 14px;
+            border-radius: 14px;
+            z-index: 50;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            animation: slideUp 0.25s ease;
+            cursor: pointer;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .result.success {
-            background: #d4edda;
-            border: 2px solid #28a745;
-            color: #155724;
-        }
-
-        .result.error {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-            color: #721c24;
-        }
-
-        .result.warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            color: #856404;
-        }
+        .result.success { background: #d4edda; border: 2px solid #28a745; color: #155724; }
+        .result.error   { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
+        .result.warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
 
         .result-icon {
-            font-size: 48px;
+            font-size: 30px;
             text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .result-content {
-            text-align: center;
-        }
-
-        .result-content h2 {
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-
-        .result-content p {
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* Attendance badge */
-        .attendance-badge {
-            display: inline-block;
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 6px;
+            line-height: 1.1;
             margin-bottom: 4px;
         }
 
-        .badge-onsite  { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+        .result-content { text-align: center; }
+        .result-content h2 { margin-bottom: 6px; font-size: 18px; }
+        .result-content p  { font-size: 15px; line-height: 1.5; }
 
-        /* Statistics */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
-        }
-
-        .stat-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
+        .result-hint {
             text-align: center;
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 6px;
         }
 
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
+        .attendance-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 4px;
         }
 
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .badge-onsite { background: #d4edda; color: #155724; border: 1px solid #28a745; }
 
-        /* Loading Indicator */
+        /* ---------- Loading pill (also floating) ---------- */
         .loading {
-            text-align: center;
-            padding: 20px;
             display: none;
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            max-width: 580px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            z-index: 60;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            font-size: 14px;
+            color: #333;
         }
 
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 26px;
+            height: 26px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 6px;
         }
 
         @keyframes spin {
@@ -296,49 +266,33 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Scanner Status */
+        /* ---------- Scanner status / last scanned ---------- */
         .scanner-status {
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
             display: none;
         }
 
-        .scanner-status.active {
-            display: block;
-            background: #d4edda;
-            color: #155724;
-        }
+        .scanner-status.active { display: block; background: #d4edda; color: #155724; }
+        .scanner-status.error  { display: block; background: #f8d7da; color: #721c24; }
 
-        .scanner-status.error {
-            display: block;
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Last Scanned */
         .last-scanned {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 6px 10px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             display: none;
-        }
-
-        .last-scanned.show {
-            display: block;
-        }
-
-        .last-scanned-label {
             font-size: 12px;
             color: #666;
-            margin-bottom: 5px;
         }
 
+        .last-scanned.show { display: block; }
+
         .last-scanned-value {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 600;
             color: #333;
             font-family: monospace;
@@ -348,25 +302,34 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header + compact statistics -->
         <div class="header">
-            <h1>📋 Seminar Check-In</h1>
-            <p>Scan QR code or enter participant ID</p>
+            <h1>📋 Check-In</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCheckedIn">-</div>
+                    <div class="stat-label">Checked in</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRegistered">-</div>
+                    <div class="stat-label">Registered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="percentage">-</div>
+                    <div class="stat-label">Arrived</div>
+                </div>
+            </div>
         </div>
 
         <!-- Tabs -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('scanner')">📷 QR Scanner</button>
-            <button class="tab" onclick="switchTab('manual')">⌨️ Manual Entry</button>
+            <button class="tab active" onclick="switchTab('scanner')">📷 Scanner</button>
+            <button class="tab" onclick="switchTab('manual')">⌨️ Manual</button>
         </div>
 
         <!-- QR Scanner Tab -->
         <div id="scanner-tab" class="tab-content active">
             <div class="scanner-status" id="scannerStatus"></div>
-
-            <div class="last-scanned" id="lastScanned">
-                <div class="last-scanned-label">Last Scanned ID:</div>
-                <div class="last-scanned-value" id="lastScannedValue">-</div>
-            </div>
 
             <div id="qr-reader"></div>
 
@@ -379,20 +342,21 @@
                 </button>
             </div>
 
-            <div style="text-align: center; color: #666; font-size: 13px; margin-top: 10px;">
-                <p>💡 Tip: Point camera at QR code. Check-in happens automatically!</p>
+            <div class="last-scanned" id="lastScanned">
+                Last scanned: <span class="last-scanned-value" id="lastScannedValue">-</span>
             </div>
 
             <div class="loading" id="loading-scanner">
                 <div class="loading-spinner"></div>
                 <p>Processing check-in...</p>
             </div>
-            <div class="result" id="result-scanner">
+            <div class="result" id="result-scanner" onclick="this.style.display='none'">
                 <div class="result-icon" id="resultIcon-scanner"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-scanner"></h2>
                     <p id="resultMessage-scanner"></p>
                 </div>
+                <div class="result-hint">Tap to close</div>
             </div>
         </div>
 
@@ -407,44 +371,26 @@
                     autocomplete="off"
                 >
             </div>
-            <button class="btn" onclick="checkInManual()">Check In Participant</button>
+            <button class="btn" style="width:100%" onclick="checkInManual()">Check In Participant</button>
 
             <div class="loading" id="loading-manual">
                 <div class="loading-spinner"></div>
                 <p>Processing check-in...</p>
             </div>
-            <div class="result" id="result-manual">
+            <div class="result" id="result-manual" onclick="this.style.display='none'">
                 <div class="result-icon" id="resultIcon-manual"></div>
                 <div class="result-content">
                     <h2 id="resultTitle-manual"></h2>
                     <p id="resultMessage-manual"></p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Statistics -->
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalCheckedIn">-</div>
-                <div class="stat-label">Checked In</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalRegistered">-</div>
-                <div class="stat-label">Registered</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="percentage">-</div>
-                <div class="stat-label">% Arrived</div>
+                <div class="result-hint">Tap to close</div>
             </div>
         </div>
     </div>
 
     <!-- ============================================================
          QR LIBRARY LOADER (with fallbacks)
-         Order: 1) local file next to this page  (most reliable at the venue)
-                2) unpkg CDN
-                3) jsDelivr CDN
-         Put html5-qrcode.min.js in the same folder as this HTML file.
+         Order: 1) local file next to this page  2) unpkg  3) jsDelivr
          ============================================================ -->
     <script>
         (function () {
@@ -468,8 +414,7 @@
 
     <script>
         // ============================================================
-        // CONFIGURATION — replace with your Google Apps Script Web App URL
-        // (must be the URL of the CURRENT deployment — see Deploy → Manage deployments)
+        // CONFIGURATION — Google Apps Script Web App URL (current deployment)
         // ============================================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-whrebay0KABeptWd7qEMOYhIcSGQRIcCTETOeKAZooiEVplZvIdswuXnBeZsK9VD/exec';
 
@@ -483,12 +428,10 @@
 
         // ============================================================
         // CONNECTION PRE-WARM
-        // Wakes up the Apps Script instance so the first real check-in
-        // doesn't pay the cold-start penalty (~1-3s).
         // ============================================================
         function preWarmConnection() {
             fetch(SCRIPT_URL + '?action=warmUp', { method: 'GET', keepalive: true })
-                .catch(() => {}); // fire-and-forget, ignore errors
+                .catch(() => {});
         }
 
         // ============================================================
@@ -526,7 +469,6 @@
                 if (isScanning) stopScanning();
             }
 
-            // Hide results when switching tabs
             document.getElementById('result-scanner').style.display = 'none';
             document.getElementById('result-manual').style.display  = 'none';
         }
@@ -537,11 +479,10 @@
         function startScanning() {
             const scannerStatus = document.getElementById('scannerStatus');
 
-            // Library not loaded (all sources failed, or still loading)
             if (typeof Html5Qrcode === 'undefined') {
                 scannerStatus.className = 'scanner-status error';
                 scannerStatus.textContent = window.qrLibFailed
-                    ? '❌ QR library failed to load. Check internet / put html5-qrcode.min.js next to this page, or use Manual Entry.'
+                    ? '❌ QR library failed to load. Check internet, or use Manual.'
                     : '⏳ QR library is still loading. Please try again in a moment.';
                 return;
             }
@@ -552,13 +493,21 @@
 
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+                {
+                    fps: 10,
+                    // Wide (4:3) camera view = shorter on phones; scan box = 75% of the view
+                    aspectRatio: 1.3333,
+                    qrbox: (w, h) => {
+                        const s = Math.floor(Math.min(w, h) * 0.75);
+                        return { width: s, height: s };
+                    }
+                },
                 onScanSuccess,
-                () => {} // suppress per-frame scan errors
+                () => {}
             ).then(() => {
                 isScanning = true;
                 scannerStatus.className = 'scanner-status active';
-                scannerStatus.textContent = '✅ Scanner active - Point camera at QR code';
+                scannerStatus.textContent = '✅ Scanner active';
                 document.getElementById('startScanBtn').style.display = 'none';
                 document.getElementById('stopScanBtn').style.display  = 'block';
             }).catch(err => {
@@ -585,7 +534,6 @@
         function onScanSuccess(decodedText) {
             if (scanCooldown || decodedText === lastScannedCode) return;
 
-            // Fire the fetch immediately on decode — before beep / DOM updates
             const fetchPromise = startCheckInFetch(decodedText);
 
             scanCooldown    = true;
@@ -603,12 +551,10 @@
 
         // ============================================================
         // CHECK-IN
-        // startCheckInFetch: starts the network request immediately.
-        // handleFetchPromise: awaits the result and updates the UI.
         // ============================================================
         function startCheckInFetch(uniqueId) {
             const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
-            return fetch(url); // returns Promise — not awaited yet
+            return fetch(url);
         }
 
         async function handleFetchPromise(fetchPromise, uniqueId, source) {
@@ -620,10 +566,9 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
                 handleCheckInResult(result, source);
-                fetchStats(); // parallel — doesn't block UI update
+                fetchStats();
 
             } catch (error) {
-                // Allow the same QR to be scanned again right away after a network failure
                 if (source === 'scanner') lastScannedCode = '';
                 console.error('Check-in error:', error);
                 showResult(source, 'error', '❌', 'Error', 'Failed to process check-in: ' + escapeHtml(error.message));
@@ -654,27 +599,26 @@
         // ============================================================
         function handleCheckInResult(result, source) {
             if (result.success) {
-                const badge = formatAttendance(result.attendance);
                 showResult(
                     source,
                     'success',
                     '✅',
                     'Check-In Successful!',
-                    `Welcome, <strong>${escapeHtml(result.name)}</strong>!<br>
-                     ${badge}<br>
-                     Time: ${formatTime(result.checkInTime)}`
+                    `<strong>${escapeHtml(result.name)}</strong><br>
+                     ${formatAttendance(result.attendance)}<br>
+                     ${formatTime(result.checkInTime)}`
                 );
                 playSuccessSound();
 
             } else if (result.message === 'Already checked in') {
-                const badge = formatAttendance(result.attendance);
                 showResult(
                     source,
                     'warning',
                     '⚠️',
                     'Already Checked In',
-                    `<strong>${escapeHtml(result.name)}</strong> checked in at ${formatTime(result.checkInTime)}<br>
-                     ${badge}`
+                    `<strong>${escapeHtml(result.name)}</strong><br>
+                     ${formatTime(result.checkInTime)}<br>
+                     ${formatAttendance(result.attendance)}`
                 );
                 playErrorSound();
 
@@ -689,7 +633,6 @@
                 playErrorSound();
 
             } else {
-                // System busy / sheet write error / anything else → allow immediate retry
                 if (source === 'scanner') lastScannedCode = '';
                 showResult(
                     source,
@@ -702,10 +645,6 @@
             }
         }
 
-        // ============================================================
-        // ATTENDANCE BADGE
-        // Everyone is on-site now (the backend returns 'On-site').
-        // ============================================================
         function formatAttendance(value) {
             if (!value) return '';
             return `<span class="attendance-badge badge-onsite">🏢 On-Site / 会場参加</span>`;
@@ -772,7 +711,7 @@
         });
 
         window.addEventListener('load', () => {
-            preWarmConnection();  // wake up GAS instance immediately
+            preWarmConnection();
             fetchStats();
             setInterval(fetchStats, 15000);
         });
