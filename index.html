@@ -173,27 +173,6 @@
         #qr-reader__dashboard_section_swaplink { display: none !important; }
         #qr-reader__status_span { display: none !important; }
 
-        /* Custom Scanner Overlay Bar Animation */
-        .scanner-laser {
-            display: none;
-            position: absolute;
-            top: 20%;
-            left: 10%;
-            right: 10%;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(99,102,241,0) 0%, #6366f1 50%, rgba(99,102,241,0) 100%);
-            box-shadow: 0 0 12px 2px #6366f1;
-            z-index: 10;
-            pointer-events: none;
-            animation: laserScan 2.2s infinite ease-in-out;
-        }
-
-        @keyframes laserScan {
-            0% { top: 15%; opacity: 0.3; }
-            50% { top: 80%; opacity: 1; }
-            100% { top: 15%; opacity: 0.3; }
-        }
-
         .scanner-controls {
             display: flex;
             gap: 10px;
@@ -426,7 +405,6 @@
 
             <div class="scanner-container">
                 <div id="qr-reader"></div>
-                <div class="scanner-laser" id="scannerLaser"></div>
             </div>
 
             <div class="scanner-controls">
@@ -674,10 +652,9 @@
             ).then(() => {
                 isScanning = true;
                 scannerStatus.className = 'scanner-status active';
-                scannerStatus.textContent = '✅ Scanner Active - Align QR inside reticle';
+                scannerStatus.textContent = '✅ Scanner Active';
                 document.getElementById('startScanBtn').style.display = 'none';
                 document.getElementById('stopScanBtn').style.display  = 'flex';
-                document.getElementById('scannerLaser').style.display = 'block';
             }).catch(err => {
                 scannerStatus.className = 'scanner-status error';
                 scannerStatus.textContent = '❌ Camera permission denied or HTTPS missing.';
@@ -694,7 +671,6 @@
                     scannerStatus.style.display = 'none';
                     document.getElementById('startScanBtn').style.display = 'flex';
                     document.getElementById('stopScanBtn').style.display  = 'none';
-                    document.getElementById('scannerLaser').style.display = 'none';
                 }).catch(console.error);
             }
         }
@@ -702,23 +678,37 @@
         function onScanSuccess(decodedText) {
             if (scanCooldown || decodedText === lastScannedCode) return;
 
+            // Clean input string
+            const scannedStr = decodedText.trim();
+
+            // Ignore common non-ID formats such as Web URLs (http:// or https://) or WiFi/VCard QR codes
+            if (/^(https?:\/\/|mailto:|tel:|wifi:|begin:vcard)/i.test(scannedStr)) {
+                console.warn('Ignored non-participant QR code:', scannedStr);
+                return; // Silently ignore non-ID QR codes without triggering cooldown
+            }
+
+            // OPTIONAL: Standardize ID checking
+            // If your IDs always follow a specific pattern (e.g., starting with SEM- or containing hyphens),
+            // you can enforce it here. Example regex for standard seminar IDs:
+            // if (!/^SEM-[A-Z0-9-]+$/i.test(scannedStr)) return;
+
             scanCooldown    = true;
-            lastScannedCode = decodedText;
+            lastScannedCode = scannedStr;
 
             document.getElementById('lastScanned').classList.add('show');
-            document.getElementById('lastScannedValue').textContent = decodedText;
+            document.getElementById('lastScannedValue').textContent = scannedStr;
 
             playBeep();
 
             if (!navigator.onLine) {
-                queueOfflineCheckIn(decodedText);
-                showResult('scanner', 'warning', '💾', 'Saved Offline', `Scan stored locally for <strong>${escapeHtml(decodedText)}</strong>. Will sync when back online.`);
+                queueOfflineCheckIn(scannedStr);
+                showResult('scanner', 'warning', '💾', 'Saved Offline', `Scan stored locally for <strong>${escapeHtml(scannedStr)}</strong>. Will sync when back online.`);
                 setTimeout(() => { scanCooldown = false; }, 1000);
                 return;
             }
 
-            const fetchPromise = startCheckInFetch(decodedText);
-            handleFetchPromise(fetchPromise, decodedText, 'scanner');
+            const fetchPromise = startCheckInFetch(scannedStr);
+            handleFetchPromise(fetchPromise, scannedStr, 'scanner');
 
             // Reduced cooldown from 3000ms to 1200ms for faster sequential check-ins
             setTimeout(() => { scanCooldown = false; }, 1200);
