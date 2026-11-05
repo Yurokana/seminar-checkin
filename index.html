@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seminar Check-In System - QR Scanner</title>
+    <title>Seminar Check-In System - Enhanced QR Scanner</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,22 +16,25 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 50%, #1e1b4b 100%);
             min-height: 100vh;
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: 10px;
+            padding: 12px;
+            color: #1e293b;
         }
 
         .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -15px rgba(30, 27, 75, 0.4);
+            max-width: 540px;
             width: 100%;
-            padding: 14px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
         }
 
         /* ---------- Header + compact stats bar ---------- */
@@ -35,15 +42,38 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .header h1 {
-            color: #333;
-            font-size: 18px;
+            color: #1e1b4b;
+            font-size: 20px;
+            font-weight: 700;
             white-space: nowrap;
+            letter-spacing: -0.5px;
         }
+
+        .offline-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 3px 8px;
+            border-radius: 12px;
+            border: 1px solid #fde68a;
+        }
+
+        .offline-badge.hidden { display: none; }
 
         .stats {
             display: grid;
@@ -54,23 +84,26 @@
         }
 
         .stat-card {
-            background: #f8f9fa;
-            padding: 5px 4px;
-            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px 4px;
+            border-radius: 10px;
             text-align: center;
             min-width: 0;
+            transition: all 0.2s ease;
         }
 
         .stat-number {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
+            font-size: 17px;
+            font-weight: 700;
+            color: #4f46e5;
             line-height: 1.1;
         }
 
         .stat-label {
             font-size: 9px;
-            color: #666;
+            font-weight: 600;
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.3px;
             white-space: nowrap;
@@ -79,53 +112,87 @@
         /* ---------- Tabs ---------- */
         .tabs {
             display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #e0e0e0;
+            gap: 4px;
+            margin-bottom: 14px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
 
         .tab {
             flex: 1;
-            padding: 10px 4px;
+            padding: 9px 4px;
             background: transparent;
             border: none;
-            color: #666;
-            font-size: 15px;
+            color: #64748b;
+            font-size: 14px;
             font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
-            position: relative;
-            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
-        .tab:hover,
-        .tab.active { color: #667eea; }
+        .tab:hover { color: #1e1b4b; }
 
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #667eea;
+        .tab.active {
+            background: #ffffff;
+            color: #4f46e5;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
         }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* ---------- QR Scanner ---------- */
-        #qr-reader {
-            border-radius: 10px;
+        /* ---------- QR Scanner Area with Custom Frame ---------- */
+        .scanner-container {
+            position: relative;
+            border-radius: 14px;
             overflow: hidden;
-            margin-bottom: 10px;
+            background: #0f172a;
+            margin-bottom: 12px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #qr-reader {
+            border: none !important;
+            border-radius: 14px;
+            overflow: hidden;
         }
 
         #qr-reader video {
-            border-radius: 10px;
+            border-radius: 14px;
             width: 100% !important;
+            object-fit: cover;
         }
 
         #qr-reader__dashboard_section_swaplink { display: none !important; }
+        #qr-reader__status_span { display: none !important; }
+
+        /* Custom Scanner Overlay Bar Animation */
+        .scanner-laser {
+            display: none;
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(99,102,241,0) 0%, #6366f1 50%, rgba(99,102,241,0) 100%);
+            box-shadow: 0 0 12px 2px #6366f1;
+            z-index: 10;
+            pointer-events: none;
+            animation: laserScan 2.2s infinite ease-in-out;
+        }
+
+        @keyframes laserScan {
+            0% { top: 15%; opacity: 0.3; }
+            50% { top: 80%; opacity: 1; }
+            100% { top: 15%; opacity: 0.3; }
+        }
 
         .scanner-controls {
             display: flex;
@@ -136,26 +203,33 @@
         .btn {
             flex: 1;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .btn:active { transform: translateY(1px); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-success { background: #28a745; }
-        .btn-danger  { background: #dc3545; }
+        .btn:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); }
+        .btn-danger  { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
 
         /* ---------- Manual entry ---------- */
-        .input-group { margin-bottom: 12px; }
+        .input-group { margin-bottom: 14px; }
 
         .input-group label {
             display: block;
-            color: #333;
+            color: #1e1b4b;
             font-weight: 600;
             margin-bottom: 6px;
             font-size: 14px;
@@ -163,111 +237,116 @@
 
         .input-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 12px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s ease;
         }
 
         .input-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
         }
 
-        /* ---------- Result: floating panel at the bottom of the screen ----------
-           Always visible without scrolling, doesn't push the camera around.
-           Tap the panel to close it. */
+        /* ---------- Result Floating Panel ---------- */
         .result {
             display: none;
             position: fixed;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            max-width: 580px;
+            left: 14px;
+            right: 14px;
+            bottom: 14px;
+            max-width: 512px;
             margin: 0 auto;
-            padding: 14px;
-            border-radius: 14px;
+            padding: 16px;
+            border-radius: 16px;
             z-index: 50;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-            animation: slideUp 0.25s ease;
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .result.success { background: #d4edda; border: 2px solid #28a745; color: #155724; }
-        .result.error   { background: #f8d7da; border: 2px solid #dc3545; color: #721c24; }
-        .result.warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
+        .result.success { background: rgba(236, 253, 245, 0.98); border: 2px solid #10b981; color: #065f46; }
+        .result.error   { background: rgba(254, 242, 242, 0.98); border: 2px solid #ef4444; color: #991b1b; }
+        .result.warning { background: rgba(254, 252, 232, 0.98); border: 2px solid #f59e0b; color: #92400e; }
 
         .result-close {
             position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 34px;
-            height: 34px;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
             border: none;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.12);
+            background: rgba(0, 0, 0, 0.08);
             color: inherit;
-            font-size: 20px;
+            font-size: 16px;
             line-height: 1;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .result-close:active { background: rgba(0, 0, 0, 0.25); }
+        .result-close:hover { background: rgba(0, 0, 0, 0.15); }
 
         .result-icon {
-            font-size: 30px;
+            font-size: 32px;
             text-align: center;
             line-height: 1.1;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .result-content { text-align: center; }
-        .result-content h2 { margin-bottom: 6px; font-size: 18px; }
-        .result-content p  { font-size: 15px; line-height: 1.5; }
+        .result-content h2 { margin-bottom: 4px; font-size: 17px; font-weight: 700; }
+        .result-content p  { font-size: 14px; line-height: 1.5; }
 
         .attendance-badge {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
-        .badge-onsite { background: #d4edda; color: #155724; border: 1px solid #28a745; }
+        .badge-onsite { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
 
-        /* ---------- Loading pill (also floating) ---------- */
+        /* ---------- Loading Floating Pill ---------- */
         .loading {
             display: none;
             position: fixed;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            max-width: 580px;
+            left: 14px;
+            right: 14px;
+            bottom: 14px;
+            max-width: 512px;
             margin: 0 auto;
-            background: white;
-            border-radius: 14px;
-            padding: 12px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 14px;
             text-align: center;
             z-index: 60;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.3);
             font-size: 14px;
-            color: #333;
+            font-weight: 600;
+            color: #1e1b4b;
         }
 
         .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid #e0e7ff;
+            border-top: 3px solid #4f46e5;
             border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 6px;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 8px;
         }
 
         @keyframes spin {
@@ -277,25 +356,27 @@
 
         /* ---------- Scanner status / last scanned ---------- */
         .scanner-status {
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
             text-align: center;
             font-size: 13px;
+            font-weight: 500;
             display: none;
         }
 
-        .scanner-status.active { display: block; background: #d4edda; color: #155724; }
-        .scanner-status.error  { display: block; background: #f8d7da; color: #721c24; }
+        .scanner-status.active { display: block; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+        .scanner-status.error  { display: block; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
         .last-scanned {
-            background: #f8f9fa;
-            padding: 6px 10px;
-            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 10px;
             margin-bottom: 8px;
             display: none;
             font-size: 12px;
-            color: #666;
+            color: #64748b;
         }
 
         .last-scanned.show { display: block; }
@@ -303,7 +384,7 @@
         .last-scanned-value {
             font-size: 13px;
             font-weight: 600;
-            color: #333;
+            color: #1e1b4b;
             font-family: monospace;
             word-break: break-all;
         }
@@ -313,7 +394,10 @@
     <div class="container">
         <!-- Header + compact statistics -->
         <div class="header">
-            <h1>📋 Check-In</h1>
+            <div class="header-title">
+                <h1>📋 Check-In System</h1>
+                <span id="offlineBadge" class="offline-badge hidden">⚠️ Offline Mode</span>
+            </div>
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-number" id="totalCheckedIn">-</div>
@@ -340,7 +424,10 @@
         <div id="scanner-tab" class="tab-content active">
             <div class="scanner-status" id="scannerStatus"></div>
 
-            <div id="qr-reader"></div>
+            <div class="scanner-container">
+                <div id="qr-reader"></div>
+                <div class="scanner-laser" id="scannerLaser"></div>
+            </div>
 
             <div class="scanner-controls">
                 <button class="btn btn-success" id="startScanBtn" onclick="startScanning()">
@@ -399,10 +486,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         QR LIBRARY LOADER (with fallbacks)
-         Order: 1) local file next to this page  2) unpkg  3) jsDelivr
-         ============================================================ -->
+    <!-- Multi-source Fallback QR Script Loader -->
     <script>
         (function () {
             var sources = [
@@ -424,31 +508,101 @@
     </script>
 
     <script>
-        // ============================================================
-        // CONFIGURATION — Google Apps Script Web App URL (current deployment)
-        // ============================================================
+        // CONFIGURATION — Google Apps Script Web App URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-whrebay0KABeptWd7qEMOYhIcSGQRIcCTETOeKAZooiEVplZvIdswuXnBeZsK9VD/exec';
 
-        // ============================================================
         // STATE
-        // ============================================================
         let html5QrCode     = null;
         let isScanning      = false;
         let lastScannedCode = '';
         let scanCooldown    = false;
+        let audioCtx        = null;
 
-        // ============================================================
-        // CONNECTION PRE-WARM
-        // ============================================================
-        function preWarmConnection() {
-            fetch(SCRIPT_URL + '?action=warmUp', { method: 'GET', keepalive: true })
-                .catch(() => {});
+        // Web Audio initialization on user interaction to satisfy browser Autoplay Policy
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
 
-        // ============================================================
+        function createOsc(freq, type, duration) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const osc  = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                osc.type = type;
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { /* ignore audio errors */ }
+        }
+
+        function playBeep()         { createOsc(800,  'sine',     0.1); }
+        function playSuccessSound() { createOsc(1000, 'sine',     0.2); }
+        function playErrorSound()   { createOsc(400,  'sawtooth', 0.3); }
+
+        // OFFLINE QUEUE MANAGEMENT (localStorage)
+        function getOfflineQueue() {
+            return JSON.parse(localStorage.getItem('checkin_offline_queue') || '[]');
+        }
+
+        function saveOfflineQueue(queue) {
+            localStorage.setItem('checkin_offline_queue', JSON.stringify(queue));
+            updateOfflineUI();
+        }
+
+        function queueOfflineCheckIn(uniqueId) {
+            const queue = getOfflineQueue();
+            queue.push({ uniqueId, timestamp: new Date().toISOString() });
+            saveOfflineQueue(queue);
+        }
+
+        function updateOfflineUI() {
+            const queue = getOfflineQueue();
+            const badge = document.getElementById('offlineBadge');
+            if (!navigator.onLine || queue.length > 0) {
+                badge.classList.remove('hidden');
+                badge.textContent = `⚠️ Offline (${queue.length} pending)`;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        async function syncOfflineQueue() {
+            if (!navigator.onLine) return;
+            const queue = getOfflineQueue();
+            if (queue.length === 0) return;
+
+            const remaining = [];
+            for (const item of queue) {
+                try {
+                    const res = await startCheckInFetch(item.uniqueId);
+                    if (!res.ok) remaining.push(item);
+                } catch (e) {
+                    remaining.push(item);
+                }
+            }
+            saveOfflineQueue(remaining);
+            if (remaining.length === 0) fetchStats();
+        }
+
+        // PRE-WARM CONNECTION
+        function preWarmConnection() {
+            if (!navigator.onLine) return;
+            fetch(SCRIPT_URL + '?action=warmUp', { method: 'GET', keepalive: true }).catch(() => {});
+        }
+
         // STATISTICS
-        // ============================================================
         async function fetchStats() {
+            if (!navigator.onLine) return;
             try {
                 const response = await fetch(SCRIPT_URL + '?action=getStats', { cache: 'no-cache' });
                 if (!response.ok) throw new Error('Network error');
@@ -464,10 +618,9 @@
             }
         }
 
-        // ============================================================
         // TAB SWITCHING
-        // ============================================================
         function switchTab(tabName) {
+            initAudio();
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
 
@@ -484,17 +637,16 @@
             document.getElementById('result-manual').style.display  = 'none';
         }
 
-        // ============================================================
         // QR SCANNER
-        // ============================================================
         function startScanning() {
+            initAudio();
             const scannerStatus = document.getElementById('scannerStatus');
 
             if (typeof Html5Qrcode === 'undefined') {
                 scannerStatus.className = 'scanner-status error';
                 scannerStatus.textContent = window.qrLibFailed
-                    ? '❌ QR library failed to load. Check internet, or use Manual.'
-                    : '⏳ QR library is still loading. Please try again in a moment.';
+                    ? '❌ QR library failed to load. Check internet connection.'
+                    : '⏳ QR library loading. Try again in a moment.';
                 return;
             }
 
@@ -502,30 +654,34 @@
                 html5QrCode = new Html5Qrcode("qr-reader");
             }
 
+            // Optimization options for high-speed scanning
+            const config = {
+                fps: 25, // Increased FPS for faster frame analysis (default was 10)
+                aspectRatio: 1.3333,
+                qrbox: (w, h) => {
+                    const s = Math.floor(Math.min(w, h) * 0.85); // Larger box for easier alignment
+                    return { width: s, height: s };
+                },
+                // Restrict scanning specifically to QR_CODE format to reduce decoder processing load
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+            };
+
             html5QrCode.start(
                 { facingMode: "environment" },
-                {
-                    fps: 10,
-                    // Wide (4:3) camera view = shorter on phones; scan box = 75% of the view
-                    aspectRatio: 1.3333,
-                    qrbox: (w, h) => {
-                        const s = Math.floor(Math.min(w, h) * 0.75);
-                        return { width: s, height: s };
-                    }
-                },
+                config,
                 onScanSuccess,
                 () => {}
             ).then(() => {
                 isScanning = true;
                 scannerStatus.className = 'scanner-status active';
-                scannerStatus.textContent = '✅ Scanner active';
+                scannerStatus.textContent = '✅ Scanner Active - Align QR inside reticle';
                 document.getElementById('startScanBtn').style.display = 'none';
-                document.getElementById('stopScanBtn').style.display  = 'block';
+                document.getElementById('stopScanBtn').style.display  = 'flex';
+                document.getElementById('scannerLaser').style.display = 'block';
             }).catch(err => {
                 scannerStatus.className = 'scanner-status error';
-                scannerStatus.textContent = '❌ Camera access denied or not available (HTTPS required)';
+                scannerStatus.textContent = '❌ Camera permission denied or HTTPS missing.';
                 console.error('Scanner error:', err);
-                alert('Camera access required! Please allow camera permissions in your browser settings.');
             });
         }
 
@@ -536,16 +692,15 @@
                     const scannerStatus = document.getElementById('scannerStatus');
                     scannerStatus.className = 'scanner-status';
                     scannerStatus.style.display = 'none';
-                    document.getElementById('startScanBtn').style.display = 'block';
+                    document.getElementById('startScanBtn').style.display = 'flex';
                     document.getElementById('stopScanBtn').style.display  = 'none';
+                    document.getElementById('scannerLaser').style.display = 'none';
                 }).catch(console.error);
             }
         }
 
         function onScanSuccess(decodedText) {
             if (scanCooldown || decodedText === lastScannedCode) return;
-
-            const fetchPromise = startCheckInFetch(decodedText);
 
             scanCooldown    = true;
             lastScannedCode = decodedText;
@@ -555,14 +710,21 @@
 
             playBeep();
 
+            if (!navigator.onLine) {
+                queueOfflineCheckIn(decodedText);
+                showResult('scanner', 'warning', '💾', 'Saved Offline', `Scan stored locally for <strong>${escapeHtml(decodedText)}</strong>. Will sync when back online.`);
+                setTimeout(() => { scanCooldown = false; }, 1000);
+                return;
+            }
+
+            const fetchPromise = startCheckInFetch(decodedText);
             handleFetchPromise(fetchPromise, decodedText, 'scanner');
 
-            setTimeout(() => { scanCooldown = false; }, 3000);
+            // Reduced cooldown from 3000ms to 1200ms for faster sequential check-ins
+            setTimeout(() => { scanCooldown = false; }, 1200);
         }
 
-        // ============================================================
-        // CHECK-IN
-        // ============================================================
+        // CHECK-IN HANDLERS
         function startCheckInFetch(uniqueId) {
             const url = `${SCRIPT_URL}?action=checkIn&uniqueId=${encodeURIComponent(uniqueId.trim())}`;
             return fetch(url);
@@ -581,9 +743,14 @@
 
             } catch (error) {
                 if (source === 'scanner') lastScannedCode = '';
-                console.error('Check-in error:', error);
-                showResult(source, 'error', '❌', 'Error', 'Failed to process check-in: ' + escapeHtml(error.message));
-                playErrorSound();
+                if (!navigator.onLine) {
+                    queueOfflineCheckIn(uniqueId);
+                    showResult(source, 'warning', '💾', 'Saved Offline', `Saved locally. Will sync automatically when connection restores.`);
+                } else {
+                    console.error('Check-in error:', error);
+                    showResult(source, 'error', '❌', 'Network Error', 'Failed to process: ' + escapeHtml(error.message));
+                    playErrorSound();
+                }
             } finally {
                 document.getElementById(`loading-${source}`).style.display = 'none';
             }
@@ -591,7 +758,12 @@
 
         async function checkIn(uniqueId, source) {
             if (!uniqueId || uniqueId.trim() === '') {
-                showResult(source, 'error', '⚠️', 'Error', 'Please scan a valid QR code');
+                showResult(source, 'error', '⚠️', 'Invalid Input', 'Please enter or scan a valid ID');
+                return;
+            }
+            if (!navigator.onLine) {
+                queueOfflineCheckIn(uniqueId);
+                showResult(source, 'warning', '💾', 'Saved Offline', `Stored offline. Will sync when reconnected.`);
                 return;
             }
             const fetchPromise = startCheckInFetch(uniqueId);
@@ -599,15 +771,14 @@
         }
 
         function checkInManual() {
+            initAudio();
             const uniqueId = document.getElementById('uniqueId').value.trim();
             if (!uniqueId) return;
             checkIn(uniqueId, 'manual');
             document.getElementById('uniqueId').value = '';
         }
 
-        // ============================================================
-        // RESULT HANDLER
-        // ============================================================
+        // RESULT DISPLAY
         function handleCheckInResult(result, source) {
             if (result.success) {
                 showResult(
@@ -639,7 +810,7 @@
                     'error',
                     '❌',
                     'Not Found',
-                    'Participant ID not found. Please verify the QR code.'
+                    'Participant ID not found in database.'
                 );
                 playErrorSound();
 
@@ -649,8 +820,8 @@
                     source,
                     'error',
                     '⚠️',
-                    'Please try again',
-                    escapeHtml(result.message || result.error || 'Unknown error')
+                    'Try Again',
+                    escapeHtml(result.message || result.error || 'Unknown error occurred')
                 );
                 playErrorSound();
             }
@@ -658,7 +829,7 @@
 
         function formatAttendance(value) {
             if (!value) return '';
-            return `<span class="attendance-badge badge-onsite">🏢 On-Site / 会場参加</span>`;
+            return `<span class="attendance-badge badge-onsite">🏢 On-Site Participant</span>`;
         }
 
         function formatTime(rawTime) {
@@ -675,9 +846,6 @@
                 .replace(/"/g, '&quot;');
         }
 
-        // ============================================================
-        // DISPLAY
-        // ============================================================
         function showResult(source, type, icon, title, message) {
             const el = document.getElementById(`result-${source}`);
             el.className = 'result ' + type;
@@ -687,43 +855,26 @@
             document.getElementById(`resultMessage-${source}`).innerHTML = message;
         }
 
-        // ============================================================
-        // SOUND EFFECTS
-        // ============================================================
-        function createOsc(freq, type, duration) {
-            try {
-                const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-                const osc  = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = freq;
-                osc.type = type;
-                gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + duration);
-            } catch (e) { /* audio not supported */ }
-        }
-
-        function playBeep()         { createOsc(800,  'sine',     0.1); }
-        function playSuccessSound() { createOsc(1000, 'sine',     0.2); }
-        function playErrorSound()   { createOsc(400,  'sawtooth', 0.3); }
-
-        // ============================================================
-        // KEYBOARD + LIFECYCLE
-        // ============================================================
+        // EVENT LISTENERS & INITIALIZATION
         document.getElementById('uniqueId').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') checkInManual();
         });
+
+        window.addEventListener('online', () => {
+            updateOfflineUI();
+            syncOfflineQueue();
+        });
+        window.addEventListener('offline', updateOfflineUI);
 
         window.addEventListener('beforeunload', () => {
             if (isScanning) stopScanning();
         });
 
         window.addEventListener('load', () => {
+            updateOfflineUI();
             preWarmConnection();
             fetchStats();
+            syncOfflineQueue();
             setInterval(fetchStats, 15000);
         });
     </script>
