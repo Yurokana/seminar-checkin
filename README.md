@@ -3,7 +3,8 @@
 A complete, automated event registration and check-in system using Google Forms, Google Sheets, Google Apps Script, and GitHub Pages. Participants receive QR codes via email and check in instantly by scanning.
 
 Link: https://yurokana.github.io/seminar-checkin/
-Link: https://yurokana.github.io/seminar-checkin/headset.html
+
+Link: https://yurokana.github.io/seminar-checkin/headset.html#
 
 ### TLDR -> ask AI
 
