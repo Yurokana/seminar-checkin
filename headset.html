@@ -120,10 +120,15 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-whrebay0KABeptWd7qEMOYhIcSGQRIcCTETOeKAZooiEVplZvIdswuXnBeZsK9VD/exec';
 
         // TODO: fill in before sending
+// ใช้ URL รูปธงชาติขนาดเล็ก (เช่นจาก flagcdn.com)
+        const flagUS = '<img src="https://flagcdn.com/20x15/us.png" alt="US" style="vertical-align: middle; margin-right: 4px;">';
+        const flagTH = '<img src="https://flagcdn.com/20x15/th.png" alt="TH" style="vertical-align: middle; margin-right: 4px;">';
+ 
         const INTERPRETATION = { 
-            en: '🇺🇸 English – 🇹🇭 Thai',
-            ja: '🇺🇸 英語 – 🇹🇭 タイ語',
-            th: '🇺🇸 อังกฤษ – 🇹🇭 ไทย' 
+            en: flagUS + ' English – ' + flagTH + ' Thai',
+            ja: flagUS + ' 英語 – ' + flagTH + ' タイ語',
+            th: flagUS + ' อังกฤษ – ' + flagTH + ' ไทย' 
+        };
         };
         const DEADLINE       = { en: '[DEADLINE]', ja: '[DEADLINE]', th: '[DEADLINE]' };
 
